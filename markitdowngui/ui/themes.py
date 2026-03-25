@@ -128,8 +128,8 @@ CardWidget, ElevatedCardWidget, SimpleCardWidget {{
 QGroupBox {{
     border: 1px solid {border};
     border-radius: 12px;
-    margin-top: 16px;
-    padding: 14px 14px 14px 14px;
+    margin-top: 0px;
+    padding: 36px 14px 14px 14px;
     font-size: 16px;
     font-weight: 700;
     color: {title};
@@ -137,12 +137,13 @@ QGroupBox {{
 }}
 
 QGroupBox::title {{
-    subcontrol-origin: margin;
-    left: 12px;
-    padding: 0 8px;
-    color: {title};
-    font-size: 16px;
-    font-weight: 700;
+    subcontrol-origin: padding;
+    subcontrol-position: top left;
+    left: 0px;
+    padding: 0;
+    color: {subtext};
+    font-size: 14px;
+    font-weight: 600;
     background: transparent;
 }}
 

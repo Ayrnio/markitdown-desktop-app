@@ -150,6 +150,7 @@ class HelpInterface(QWidget):
         card.viewLayout.setContentsMargins(20, 12, 20, 18)
         card.viewLayout.addWidget(answer)
         card._adjustViewSize()
+        card.expandAni.finished.connect(lambda c=card: self._finalize_faq_card_height(c))
         self._faq_cards.append(card)
         return card
 
@@ -172,5 +173,12 @@ class HelpInterface(QWidget):
         for card in self._faq_cards:
             card._adjustViewSize()
             card.adjustSize()
+            self._finalize_faq_card_height(card)
         if hasattr(self, "content"):
             self.content.adjustSize()
+
+    def _finalize_faq_card_height(self, card: ExpandSettingCard) -> None:
+        if card.isExpand:
+            return
+        card.verticalScrollBar().setValue(card.verticalScrollBar().maximum())
+        card.setFixedHeight(card.card.height())
