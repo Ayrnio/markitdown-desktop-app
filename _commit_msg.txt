@@ -1,5 +1,0 @@
-UI: Perfect Dark chrome, home card polish, nav/title fixes
-
-- Title bar and nav #202020 via custom QSS (specificity over qfluentwidgets defaults)
-- StableHomeCard: drop hover vertical nudge; UrlInputBar aligned row height
-- setApplicationDisplayName for Windows shell; themes nav_bg matches title bar
