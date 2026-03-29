@@ -41,9 +41,11 @@ class AboutDialog(QDialog):
         self.setMinimumSize(560, 420)
 
     def _build_about_html(self) -> str:
+        from markitdowngui.repo_urls import github_repo_home_url
         from markitdowngui.version_info import get_app_version
 
         APP_VERSION = get_app_version()
+        repo_url = github_repo_home_url()
 
         python_ver = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
         try:
@@ -67,7 +69,7 @@ class AboutDialog(QDialog):
             "<h4>License</h4>"
             f"<pre style='white-space:pre-wrap; font-family:monospace;'>{license_text if license_text else 'License file not found.'}</pre>"
             "<h4>Repository</h4>"
-            "<p><a href='https://github.com/imadreamerboy/markitdown-gui'>github.com/imadreamerboy/markitdown-gui</a></p>"
+            f"<p><a href='{repo_url}'>{repo_url.removeprefix('https://')}</a></p>"
         )
         return lic_html
 

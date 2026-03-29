@@ -1,4 +1,4 @@
-"""AYRN brand logo for the navigation return (back) button."""
+"""Brand logo for the navigation return (back) button."""
 
 from __future__ import annotations
 

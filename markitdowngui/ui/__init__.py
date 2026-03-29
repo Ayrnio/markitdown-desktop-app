@@ -1,1 +1,1 @@
-"""UI components for the MarkItDown GUI application."""
+"""UI components for Markdown Alchemy."""

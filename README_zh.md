@@ -1,4 +1,4 @@
-# MarkItDown GUI 封装
+# Markdown Alchemy
 
 这是一个基于 `PySide6` 和 `QFluentWidgets` 的 `MarkItDown` 桌面 GUI。
 目标是用更直观的界面完成多文件到 Markdown 的转换。
@@ -19,7 +19,7 @@
 
 ## 安装
 
-你可以从 [Releases](https://github.com/imadreamerboy/markitdown-gui/releases) 下载预编译版本，或从源码运行。
+你可以从本仓库的 [Releases](https://github.com/Ayrnio/MarkdownAlchemy/releases) 下载预编译版本（如有发布），或从源码运行。上游原版应用仍见 [markitdown-gui Releases](https://github.com/imadreamerboy/markitdown-gui/releases)。
 
 ### 前置要求
 

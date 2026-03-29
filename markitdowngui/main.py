@@ -1,4 +1,4 @@
-"""Main entry point for the MarkItDown GUI application."""
+"""Main entry point for Markdown Alchemy."""
 
 import sys
 from PySide6.QtWidgets import QApplication
@@ -7,7 +7,7 @@ from markitdowngui.ui.main_window import MainWindow
 from markitdowngui.utils.logger import AppLogger
 
 def main():
-    """Start the MarkItDown GUI application."""
+    """Start the Markdown Alchemy application."""
     # Initialize logging
     AppLogger.initialize()
     
@@ -18,8 +18,8 @@ def main():
     
     # Create and start application
     app = QApplication(sys.argv)
-    app.setApplicationName("AYRN MarkFlow")
-    app.setApplicationDisplayName("AYRN MarkFlow")
+    app.setApplicationName("Markdown Alchemy")
+    app.setApplicationDisplayName("Markdown Alchemy")
     window = MainWindow()
     window.show()
     app.processEvents()

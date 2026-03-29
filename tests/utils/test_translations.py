@@ -2,11 +2,11 @@ from markitdowngui.utils.translations import get_translation, get_available_lang
 
 def test_get_translation_english():
     """Test retrieving a standard English translation."""
-    assert get_translation('en', 'app_title') == "AYRN MarkFlow"
+    assert get_translation('en', 'app_title') == "Markdown Alchemy"
 
 def test_get_translation_chinese():
     """Test retrieving a standard Chinese translation."""
-    assert get_translation('zh_CN', 'app_title') == "AYRN MarkFlow"
+    assert get_translation('zh_CN', 'app_title') == "Markdown Alchemy"
 
 def test_get_translation_fallback_to_english():
     """Test that it falls back to English if a key is missing in another language."""
@@ -21,7 +21,7 @@ def test_get_translation_fallback_to_key():
 
 def test_get_translation_nonexistent_language():
     """Test that it falls back to English for a language that doesn't exist."""
-    assert get_translation('de', 'app_title') == "AYRN MarkFlow"
+    assert get_translation('de', 'app_title') == "Markdown Alchemy"
 
 def test_get_available_languages():
     """Test that it returns the correct dictionary of available languages."""

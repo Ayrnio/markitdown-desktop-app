@@ -1,6 +1,6 @@
 [README](README_en.md)
 
-# AYRN MarkFlow
+# Markdown Alchemy
 
 A desktop GUI for [MarkItDown](https://github.com/microsoft/markitdown), built with **PySide6** and **QFluentWidgets**. It focuses on fast multi-file conversion to Markdown with a modern Fluent-style interface.
 
@@ -11,13 +11,13 @@ A desktop GUI for [MarkItDown](https://github.com/microsoft/markitdown), built w
 
 ## Fork attribution
 
-**AYRN MarkFlow** is a **fork** of **[markitdown-gui](https://github.com/imadreamerboy/markitdown-gui)** by [Jonas / imadreamerboy](https://github.com/imadreamerboy). The upstream project is an excellent baseline; this repository exists to ship a maintained variant with additional UX, theming, and conversion options.
+**Markdown Alchemy** ([repository](https://github.com/Ayrnio/MarkdownAlchemy)) is a **fork** of **[markitdown-gui](https://github.com/imadreamerboy/markitdown-gui)** by [Jonas / imadreamerboy](https://github.com/imadreamerboy). The upstream project is an excellent baseline; this repository exists to ship a maintained variant with additional UX, theming, and conversion options.
 
 ## What’s different in this fork
 
 - Time elapsed indicator
 - Visual progress indicator and real time information for the number of documents and the number of pages processed within a given document.
-- **AYRN MarkFlow** refined **Perfect Dark** theme (extra palette + nav/title chrome), centered content column on wide displays, and other layout polish.
+- **Markdown Alchemy** refined **Perfect Dark** theme (extra palette + nav/title chrome), centered content column on wide displays, and other layout polish.
 - Optional **OpenAI-compatible vision** path (e.g. **LM Studio**) for rasterized PDF pages and images; configurable vision prompt/model; optional **“always OCR PDFs”** (skip embedded text) for difficult PDFs. Azure and Tesseract flows from upstream remain.
 - Conversion **cancel** tears down in-flight **HTTP** where applicable; clearer **PDF / model** progress feedback.
 - **Add Folder** (flat: **top-level files only**, not subfolders) alongside **Add Files**; file-type filter respected when adding from a folder in the queue view.
@@ -40,7 +40,7 @@ Upstream features below still apply unless noted.
 
 ## Installation
 
-**Prebuilt binaries:** If maintainers publish builds, install from the **Releases** tab of **this** GitHub repository. You can always run from source.
+**Prebuilt binaries:** If maintainers publish builds, install from the [**Releases**](https://github.com/Ayrnio/MarkdownAlchemy/releases) tab of [**this repository**](https://github.com/Ayrnio/MarkdownAlchemy). You can always run from source.
 
 The original **markitdown-gui** project also publishes [Releases](https://github.com/imadreamerboy/markitdown-gui/releases) for the unmodified app.
 
@@ -104,7 +104,7 @@ uv pip install -e .[dev]
 pyinstaller MarkItDown.spec --clean --noconfirm
 ```
 
-The default spec builds an `onedir` app (folder name depends on your `.spec`, often under `dist/`). Adjust `MarkItDown.spec` if you want the output folder or executable name to match **AYRN MarkFlow**.
+The default spec builds an `onedir` app (folder name depends on your `.spec`, often under `dist/`). Adjust `MarkItDown.spec` if you want the output folder or executable name to match **Markdown Alchemy**.
 
 ## License
 

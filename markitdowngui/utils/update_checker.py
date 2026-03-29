@@ -8,10 +8,8 @@ from PySide6.QtCore import QThread, Signal
 from packaging.version import parse
 
 from markitdowngui import __version__ as app_version
+from markitdowngui.repo_urls import github_releases_latest_api_url
 from markitdowngui.ui.dialogs.update_dialog import UpdateDialog
-
-
-GITHUB_API_URL = "https://api.github.com/repos/imadreamerboy/markitdown-gui/releases/latest"
 
 def get_current_version():
     """Retrieves the current application version.
@@ -44,7 +42,7 @@ class UpdateChecker(QThread):
                 self.update_error.emit("Could not determine current application version.")
                 return
 
-            response = requests.get(GITHUB_API_URL, timeout=10)
+            response = requests.get(github_releases_latest_api_url(), timeout=10)
             response.raise_for_status()
             latest_release = response.json()
             latest_version = latest_release.get("tag_name")
@@ -94,7 +92,7 @@ def check_for_updates():
         MAIN_WINDOW_CLASS_LOADED = False
 
     try:
-        response = requests.get(GITHUB_API_URL)
+        response = requests.get(github_releases_latest_api_url())
         response.raise_for_status()
         latest_release = response.json()
         latest_version = latest_release.get("tag_name")

@@ -2,7 +2,7 @@
 
 TRANSLATIONS = {
     "en": {
-        "app_title": "AYRN MarkFlow",
+        "app_title": "Markdown Alchemy",
         "nav_home": "Home",
         "nav_settings": "Settings",
         "nav_help": "Help",
@@ -249,14 +249,14 @@ TRANSLATIONS = {
         "shortcut_show_shortcuts": "Show Shortcuts",
         "shortcut_cancel_conversion": "Cancel Conversion",
         "update_dialog_title": "Update Available",
-        "update_dialog_message": "A new version (<b>{version}</b>) of AYRN MarkFlow is available!",
+        "update_dialog_message": "A new version (<b>{version}</b>) of Markdown Alchemy is available!",
         "update_dialog_info": "You can download it from the <a href='{url}'>GitHub releases page</a>.",
         "update_dialog_dont_notify": "Don't notify me again",
         "update_dialog_ok": "OK",
         "update_check_error_title": "Update Check Failed",
         "update_check_error_message": "Failed to check for updates: {error}",
         "update_check_no_update_title": "No Updates Available",
-        "update_check_no_update_message": "You are using the latest version of AYRN MarkFlow.",
+        "update_check_no_update_message": "You are using the latest version of Markdown Alchemy.",
         "enable_plugins_checkbox": "Enable Plugins",
         "enable_plugins_tooltip": "Enable third-party plugins for additional conversion features",
         "doc_intel_placeholder": "Document Intelligence Endpoint (optional)",
@@ -282,7 +282,7 @@ TRANSLATIONS = {
         "conversion_starting_message": "Starting conversion..."
     },
     "zh_CN": {
-        "app_title": "AYRN MarkFlow",
+        "app_title": "Markdown Alchemy",
         "nav_home": "主页",
         "nav_settings": "设置",
         "nav_help": "帮助",
@@ -529,14 +529,14 @@ TRANSLATIONS = {
         "shortcut_show_shortcuts": "显示快捷键",
         "shortcut_cancel_conversion": "取消转换",
         "update_dialog_title": "可用更新",
-        "update_dialog_message": "MarkItDown 的一个新版本 (<b>{version}</b>) 可用！",
+        "update_dialog_message": "Markdown Alchemy 的一个新版本 (<b>{version}</b>) 可用！",
         "update_dialog_info": "您可以从 <a href=\'{url}\'>GitHub 发布页面</a> 下载。",
         "update_dialog_dont_notify": "不再提醒",
         "update_dialog_ok": "确定",
         "update_check_error_title": "更新检查失败",
         "update_check_error_message": "检查更新失败: {error}",
         "update_check_no_update_title": "没有可用更新",
-        "update_check_no_update_message": "您正在使用最新版本的 AYRN MarkFlow。",
+        "update_check_no_update_message": "您正在使用最新版本的 Markdown Alchemy。",
         
         # Error handling translations
         "conversion_in_progress_title": "转换进行中",

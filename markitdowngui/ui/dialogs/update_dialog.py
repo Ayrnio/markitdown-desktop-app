@@ -11,6 +11,9 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
+from markitdowngui.repo_urls import github_releases_page_url
+
+
 class UpdateDialog(QDialog):
     """A dialog to inform the user about a new application update."""
 
@@ -23,7 +26,7 @@ class UpdateDialog(QDialog):
         self.setWindowTitle(self.translate("update_dialog_title"))
 
         self.new_version_tag = new_version_tag
-        self.releases_url = "https://github.com/imadreamerboy/markitdown-gui/releases"
+        self.releases_url = github_releases_page_url()
 
         layout = QVBoxLayout(self)
 

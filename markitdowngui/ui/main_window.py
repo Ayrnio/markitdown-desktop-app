@@ -146,7 +146,7 @@ class MainWindow(FluentWindow):
         )
 
     def _apply_nav_return_button_icon(self) -> None:
-        """Use AYRN logo instead of the default back arrow when the asset is present."""
+        """Use the app brand logo instead of the default back arrow when the asset is present."""
         icon = make_ayrn_nav_return_icon()
         if not icon.isNull():
             self.navigationInterface.panel.returnButton.setIcon(icon)

@@ -3,6 +3,7 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import QResizeEvent, QShowEvent
 from PySide6.QtWidgets import QFrame, QScrollArea, QWidget, QVBoxLayout
+from markitdowngui.repo_urls import github_repo_home_url, github_releases_page_url
 from qfluentwidgets import (
     BodyLabel,
     ExpandSettingCard,
@@ -71,13 +72,13 @@ class HelpInterface(QWidget):
         releases_btn = HyperlinkButton()
         releases_btn.setText(self.translate("help_open_releases"))
         releases_btn.setIcon(FIF.LINK)
-        releases_btn.setUrl(QUrl("https://github.com/imadreamerboy/markitdown-gui/releases"))
+        releases_btn.setUrl(QUrl(github_releases_page_url()))
         layout.addWidget(releases_btn, 0, Qt.AlignmentFlag.AlignLeft)
 
         repo_btn = HyperlinkButton()
         repo_btn.setText(self.translate("help_open_repository"))
         repo_btn.setIcon(FIF.GITHUB)
-        repo_btn.setUrl(QUrl("https://github.com/imadreamerboy/markitdown-gui"))
+        repo_btn.setUrl(QUrl(github_repo_home_url()))
         layout.addWidget(repo_btn, 0, Qt.AlignmentFlag.AlignLeft)
 
         defuddle_docs_btn = HyperlinkButton()

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "markitdowngui"
 version = "0.1.0"
-description = "A GUI wrapper for MarkItDown to convert files to Markdown via drag-and-drop."
+description = "Markdown Alchemy — a MarkItDown GUI to convert files to Markdown via drag-and-drop."
 authors = [{name = "imadreamerboy", email = "jonas@imadreamerboy.com"}]
 license = { file = "LICENSE" }
 readme = "README.md"
@@ -20,8 +20,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/imadreamerboy/markitdowngui"
-Repository = "https://github.com/imadreamerboy/markitdowngui"
+Homepage = "https://github.com/Ayrnio/MarkdownAlchemy"
+Repository = "https://github.com/Ayrnio/MarkdownAlchemy"
 
 [tool.setuptools.packages.find]
 include = ["markitdowngui"]
