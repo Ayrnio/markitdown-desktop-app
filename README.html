@@ -1,609 +1,557 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
-
-<meta charset="utf-8">
-<meta name="generator" content="quarto-1.6.43">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-
-
-<title>readme</title>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Markdown Alchemy — Turn Anything into Markdown</title>
 <style>
-code{white-space: pre-wrap;}
-span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
-div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-ul.task-list{list-style: none;}
-ul.task-list li input[type="checkbox"] {
-  width: 0.8em;
-  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
-  vertical-align: middle;
-}
-/* CSS for syntax highlighting */
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
+  :root {
+    --bg-primary: #0a0a0f;
+    --bg-secondary: #12121a;
+    --bg-card: #16161f;
+    --bg-card-hover: #1c1c28;
+    --border: rgba(255,255,255,0.06);
+    --text-primary: #e8e8ed;
+    --text-secondary: #9898a6;
+    --text-muted: #606070;
+    --accent: #a78bfa;
+    --accent-dim: rgba(167,139,250,0.15);
+    --accent-glow: rgba(167,139,250,0.3);
+    --gold: #f6c456;
+    --gold-dim: rgba(246,196,86,0.12);
+    --success: #34d399;
+    --radius: 16px;
+    --radius-sm: 10px;
   }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top:0; left:0; right:0; z-index:100;
+    padding: 0 2rem;
+    height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(10,10,15,0.75);
+    backdrop-filter: blur(20px) saturate(1.4);
+    border-bottom: 1px solid var(--border);
+    transition: background 0.3s;
+  }
+  .nav-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 1.1rem; color: var(--text-primary);
+    text-decoration: none;
+  }
+  .nav-brand svg { flex-shrink:0; }
+  .nav-links { display:flex; gap:2rem; }
+  .nav-links a {
+    color: var(--text-secondary); text-decoration:none; font-size:0.9rem; font-weight:500;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-cta {
+    padding: 8px 20px; border-radius:8px; font-size:0.85rem; font-weight:600;
+    background: var(--accent); color: #0a0a0f; text-decoration:none;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .nav-cta:hover { transform:translateY(-1px); box-shadow: 0 4px 20px var(--accent-glow); }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding: 120px 2rem 80px;
+    overflow: hidden;
+  }
+  .hero::before {
+    content:'';
+    position:absolute; top:-40%; left:50%; transform:translateX(-50%);
+    width:900px; height:900px;
+    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+    opacity:0.4; pointer-events:none;
+  }
+  .hero::after {
+    content:'';
+    position:absolute; bottom:0; left:0; right:0; height:200px;
+    background: linear-gradient(to top, var(--bg-primary), transparent);
+    pointer-events:none;
+  }
+  .hero-badge {
+    display:inline-flex; align-items:center; gap:8px;
+    padding: 6px 16px; border-radius:100px;
+    background: var(--accent-dim); border:1px solid rgba(167,139,250,0.2);
+    font-size:0.8rem; font-weight:600; color:var(--accent);
+    margin-bottom:2rem; position:relative; z-index:1;
+  }
+  .hero h1 {
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    position:relative; z-index:1;
+    max-width: 800px;
+  }
+  .hero h1 .gradient {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--gold) 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .hero p {
+    margin-top:1.5rem; font-size:1.2rem; color:var(--text-secondary);
+    max-width:600px; position:relative; z-index:1;
+  }
+  .hero-actions {
+    display:flex; gap:1rem; margin-top:2.5rem; position:relative; z-index:1; flex-wrap:wrap; justify-content:center;
+  }
+  .btn {
+    display:inline-flex; align-items:center; gap:8px;
+    padding: 14px 28px; border-radius:12px;
+    font-size:0.95rem; font-weight:600; text-decoration:none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor:pointer; border:none;
+  }
+  .btn:hover { transform:translateY(-2px); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    color:#fff;
+    box-shadow: 0 4px 24px var(--accent-glow);
+  }
+  .btn-primary:hover { box-shadow: 0 8px 32px var(--accent-glow); }
+  .btn-secondary {
+    background: var(--bg-card); color:var(--text-primary);
+    border:1px solid var(--border);
+  }
+  .btn-secondary:hover { background:var(--bg-card-hover); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+
+  .hero-visual {
+    position:relative; z-index:1;
+    margin-top: 4rem;
+    width: 100%; max-width: 1000px;
+    border-radius: var(--radius);
+    overflow:hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 80px var(--accent-dim);
+  }
+  .hero-visual img { width:100%; display:block; }
+
+  .screenshot-tabs {
+    display:flex; gap:0; background: var(--bg-secondary); border-bottom:1px solid var(--border);
+  }
+  .screenshot-tab {
+    flex:1; padding: 10px 16px; font-size:0.8rem; font-weight:600; text-align:center;
+    color:var(--text-muted); cursor:pointer; border:none; background:transparent;
+    transition: color 0.2s, background 0.2s;
+    border-right: 1px solid var(--border);
+  }
+  .screenshot-tab:last-child { border-right:none; }
+  .screenshot-tab.active { color:var(--accent); background: var(--bg-card); }
+  .screenshot-tab:hover { color:var(--text-secondary); }
+  .screenshots-container { position:relative; background: var(--bg-secondary); }
+  .screenshots-container img {
+    width:100%; display:none; aspect-ratio:1660/1088; object-fit:cover;
+  }
+  .screenshots-container img.active { display:block; }
+
+  /* ── SECTIONS ── */
+  section { padding: 100px 2rem; }
+  .container { max-width:1100px; margin:0 auto; }
+
+  .section-label {
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em;
+    color:var(--accent); margin-bottom:1rem;
+  }
+  .section-title {
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    font-weight:800; letter-spacing:-0.02em; line-height:1.15;
+    max-width:600px;
+  }
+  .section-subtitle {
+    color:var(--text-secondary); font-size:1.05rem; margin-top:1rem; max-width:520px;
+  }
+
+  /* ── FEATURES GRID ── */
+  .features-grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px,1fr));
+    gap:1.25rem;
+    margin-top:3.5rem;
+  }
+  .feature-card {
+    padding:2rem;
+    background: var(--bg-card);
+    border:1px solid var(--border);
+    border-radius: var(--radius);
+    transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+  }
+  .feature-card:hover {
+    border-color: rgba(167,139,250,0.2);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    transform: translateY(-3px);
+  }
+  .feature-icon {
+    width:44px; height:44px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.3rem; margin-bottom:1.2rem;
+  }
+  .fi-purple { background: var(--accent-dim); color:var(--accent); }
+  .fi-gold { background: var(--gold-dim); color:var(--gold); }
+  .fi-green { background: rgba(52,211,153,0.12); color:var(--success); }
+  .feature-card h3 { font-size:1.05rem; font-weight:700; margin-bottom:0.5rem; }
+  .feature-card p { font-size:0.92rem; color:var(--text-secondary); line-height:1.6; }
+
+  /* ── FORK SECTION ── */
+  .fork-section { background: var(--bg-secondary); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+  .fork-grid { display:grid; grid-template-columns:1fr 1fr; gap:3rem; margin-top:3rem; align-items:start; }
+  .fork-item { display:flex; gap:1rem; align-items:flex-start; }
+  .fork-dot {
+    width:10px; height:10px; border-radius:50%; margin-top:7px; flex-shrink:0;
+    background: var(--accent);
+  }
+  .fork-item h4 { font-size:0.95rem; font-weight:700; margin-bottom:0.3rem; }
+  .fork-item p { font-size:0.88rem; color:var(--text-secondary); }
+
+  /* ── INSTALL ── */
+  .install-cols { display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-top:3rem; }
+  .install-card {
+    padding:2rem;
+    background: var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);
+  }
+  .install-card h3 {
+    font-size:1rem; font-weight:700; margin-bottom:0.4rem;
+  }
+  .install-card .desc { font-size:0.88rem; color:var(--text-secondary); margin-bottom:1.2rem; }
+  pre {
+    background: #0d0d14; border:1px solid var(--border); border-radius:var(--radius-sm);
+    padding: 1rem 1.25rem; overflow-x:auto; font-size:0.85rem;
+    font-family:'SF Mono','Fira Code','Cascadia Code',monospace;
+    color: var(--success); line-height:1.7;
+  }
+  code { font-family: inherit; }
+
+  /* ── SHORTCUTS TABLE ── */
+  .shortcuts-wrap {
+    margin-top:3rem;
+    background: var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .shortcuts-wrap table { width:100%; border-collapse:collapse; }
+  .shortcuts-wrap th {
+    text-align:left; padding:14px 20px; font-size:0.78rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);
+    background: var(--bg-secondary); border-bottom:1px solid var(--border);
+  }
+  .shortcuts-wrap td {
+    padding:12px 20px; font-size:0.9rem; border-bottom:1px solid var(--border);
+  }
+  .shortcuts-wrap tr:last-child td { border-bottom:none; }
+  .shortcuts-wrap tr:hover td { background: rgba(167,139,250,0.04); }
+  kbd {
+    display:inline-block; padding:3px 8px; border-radius:6px; font-size:0.8rem;
+    background:var(--bg-secondary); border:1px solid var(--border);
+    font-family:'SF Mono','Fira Code',monospace; color:var(--accent); font-weight:600;
+  }
+
+  /* ── OCR ── */
+  .ocr-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem; margin-top:3rem; }
+  .ocr-card {
+    padding:1.75rem;
+    background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);
+    text-align:center;
+  }
+  .ocr-card .ocr-emoji { font-size:2rem; margin-bottom:1rem; display:block; }
+  .ocr-card h4 { font-size:0.95rem; font-weight:700; margin-bottom:0.4rem; }
+  .ocr-card p { font-size:0.85rem; color:var(--text-secondary); }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 60px 2rem 40px;
+    border-top:1px solid var(--border);
+    text-align:center;
+  }
+  footer .footer-brand { font-size:1.1rem; font-weight:700; margin-bottom:0.5rem; }
+  footer .footer-links { display:flex; gap:2rem; justify-content:center; margin:1.5rem 0; flex-wrap:wrap; }
+  footer .footer-links a { color:var(--text-secondary); text-decoration:none; font-size:0.88rem; transition:color 0.2s; }
+  footer .footer-links a:hover { color:var(--accent); }
+  footer .footer-copy { color:var(--text-muted); font-size:0.8rem; margin-top:1.5rem; }
+
+  /* ── FADE-IN ANIMATIONS ── */
+  .fade-up {
+    opacity:0; transform:translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .fade-up.visible { opacity:1; transform:translateY(0); }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:768px) {
+    .nav-links { display:none; }
+    .fork-grid, .install-cols { grid-template-columns:1fr; }
+    .ocr-cards { grid-template-columns:1fr; }
+    section { padding:60px 1.25rem; }
+    .hero { padding: 100px 1.25rem 60px; }
+  }
 </style>
-
-
-<script src="README_files/libs/clipboard/clipboard.min.js"></script>
-<script src="README_files/libs/quarto-html/quarto.js"></script>
-<script src="README_files/libs/quarto-html/popper.min.js"></script>
-<script src="README_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="README_files/libs/quarto-html/anchor.min.js"></script>
-<link href="README_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="README_files/libs/quarto-html/quarto-syntax-highlighting-d4d76bf8491c20bad77d141916dc28e1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="README_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="README_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="README_files/libs/bootstrap/bootstrap-1bc8a17f135ab3d594c857e9f48e611b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
-
-
 </head>
+<body>
 
-<body class="fullcontent">
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-brand">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">
+      <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/>
+    </svg>
+    Markdown Alchemy
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#whats-new">What's New</a>
+    <a href="#install">Install</a>
+    <a href="#ocr">OCR</a>
+    <a href="#shortcuts">Shortcuts</a>
+  </div>
+  <a href="https://github.com/Ayrnio/MarkdownAlchemy/releases" class="nav-cta">Download</a>
+</nav>
 
-<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
-
-<main class="content" id="quarto-document-content">
-
-
-
-
-<p><a href="README_zh.md">阅读中文版本</a></p>
-<section id="markitdown-gui-wrapper" class="level1">
-<h1>Markdown Alchemy</h1>
-<p>A feature-rich <strong>GUI</strong> for <code>MarkItDown</code>, built with <strong>PySide6</strong>. Easily convert files to markdown using drag &amp; drop. Repository: <a href="https://github.com/Ayrnio/MarkdownAlchemy">github.com/Ayrnio/MarkdownAlchemy</a></p>
-<p><img src="gui.png" class="img-fluid" alt="Screenshot of the GUI"> ## Features</p>
-<ul>
-<li>📂 <strong>File Management</strong>:
-<ul>
-<li>Drag &amp; Drop for batch processing</li>
-<li>File type filtering</li>
-<li>Recent files history</li>
-<li>Batch processing with pause/resume</li>
-</ul></li>
-<li>🎨 <strong>User Interface</strong>:
-<ul>
-<li>Dark/Light theme support</li>
-<li>Preview panel</li>
-<li>Progress tracking</li>
-<li>Keyboard shortcuts</li>
-</ul></li>
-<li>⚙️ <strong>Advanced Options</strong>:
-<ul>
-<li>Format customization (headers, tables)</li>
-<li>Auto-save and backup</li>
-<li>Enable plugins</li>
-<li>Document Intelligence API support</li>
-</ul></li>
-<li>🛠️ <strong>Output Options</strong>:
-<ul>
-<li>Save all in one file or separately</li>
-<li>Choose output directory</li>
-<li>Quick copy &amp; paste</li>
-<li>Preview before saving</li>
-</ul></li>
-</ul>
-<section id="installation" class="level2">
-<h2 class="anchored" data-anchor-id="installation">Installation</h2>
-<p>You can download prebuilt releases from <a href="https://github.com/Ayrnio/MarkdownAlchemy/releases">this project’s Releases</a> (when published) or build it from source. For that just follow the instructions below.</p>
-<section id="prerequisites" class="level3">
-<h3 class="anchored" data-anchor-id="prerequisites">Prerequisites</h3>
-<ul>
-<li>Python <strong>3.10+</strong></li>
-<li>Install dependencies:</li>
-</ul>
-<div class="sourceCode" id="cb1"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-r</span> requirements.txt</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</section>
-<section id="run-the-app" class="level3">
-<h3 class="anchored" data-anchor-id="run-the-app">Run the App</h3>
-<div class="sourceCode" id="cb2"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> markitdowngui.main</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</section>
-<section id="keyboard-shortcuts" class="level3">
-<h3 class="anchored" data-anchor-id="keyboard-shortcuts">Keyboard Shortcuts</h3>
-<ul>
-<li><code>Ctrl+O</code>: Open Files</li>
-<li><code>Ctrl+S</code>: Save Output</li>
-<li><code>Ctrl+C</code>: Copy Output</li>
-<li><code>Ctrl+P</code>: Pause/Resume</li>
-<li><code>Ctrl+B</code>: Begin Conversion</li>
-<li><code>Ctrl+L</code>: Clear List</li>
-<li><code>Ctrl+K</code>: Show Shortcuts</li>
-<li><code>Esc</code>: Cancel Conversion</li>
-</ul>
-</section>
-</section>
-<section id="build-a-standalone-executable" class="level2">
-<h2 class="anchored" data-anchor-id="build-a-standalone-executable">Build a Standalone Executable</h2>
-<p>First activate the development environment:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> pip install <span class="at">-e</span> .<span class="pp">[</span><span class="ss">dev</span><span class="pp">]</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Use <code>PyInstaller</code>:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pyinstaller</span> <span class="at">--clean</span> <span class="at">--onefile</span> <span class="at">--windowed</span> <span class="at">-n</span> MarkItDown markitdowngui/main.py</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</section>
-<section id="license" class="level2">
-<h2 class="anchored" data-anchor-id="license">License</h2>
-<p>Licensed under <strong>MIT</strong>.</p>
-<p><strong>Note:</strong> <code>PySide6</code> uses <strong>LGPLv3</strong>, requiring dynamic linking.</p>
-</section>
-<section id="contributing" class="level2">
-<h2 class="anchored" data-anchor-id="contributing">Contributing</h2>
-<p>Contributions are welcome! Please follow these steps to contribute:</p>
-<ol type="1">
-<li><strong>Fork the repository</strong> and create a new branch for your feature or bug fix.</li>
-<li><strong>Set up the development environment</strong>:
-<ul>
-<li><p>It is recommended to use a virtual environment.</p></li>
-<li><p>This project uses <code>uv</code> for package management.</p></li>
-<li><p>To install all dependencies, including for development and testing, run:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> pip install <span class="at">-e</span> .<span class="pp">[</span><span class="ss">dev</span><span class="pp">]</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div></li>
-</ul></li>
-<li><strong>Make your changes</strong>.</li>
-<li><strong>Run the tests</strong> to ensure everything is working correctly: <code>sh     pytest</code></li>
-<li><strong>Submit a pull request</strong> with a clear description of your changes.</li>
-</ol>
-</section>
-<section id="credits" class="level2">
-<h2 class="anchored" data-anchor-id="credits">Credits</h2>
-<ul>
-<li><strong>MarkItDown</strong> (<a href="https://opensource.org/licenses/MIT">MIT License</a>)</li>
-<li><strong>PySide6</strong> (<a href="https://www.gnu.org/licenses/lgpl-3.0.html">LGPLv3 License</a>)</li>
-</ul>
-</section>
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">✦ &thinsp;Built on Microsoft MarkItDown</div>
+  <h1>Turn anything into<br><span class="gradient">Markdown.</span></h1>
+  <p>Drop your files. Paste a URL. Walk away with clean, structured Markdown&hairsp;—&hairsp;no terminal required.</p>
+  <div class="hero-actions">
+    <a href="https://github.com/Ayrnio/MarkdownAlchemy/releases" class="btn btn-primary">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download
+    </a>
+    <a href="https://github.com/Ayrnio/MarkdownAlchemy" class="btn btn-secondary">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.73.083-.73 1.205.085 1.84 1.237 1.84 1.237 1.07 1.834 2.807 1.304 3.492.997.108-.775.418-1.305.762-1.605-2.665-.3-5.467-1.332-5.467-5.93 0-1.31.468-2.382 1.235-3.22-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.3 1.23A11.51 11.51 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.29-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.838 1.233 1.91 1.233 3.22 0 4.61-2.807 5.625-5.48 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.293 0 .322.216.694.825.576C20.565 21.795 24 17.298 24 12 24 5.37 18.627 0 12 0z"/></svg>
+      View Source
+    </a>
+  </div>
+  <div class="hero-visual">
+    <div class="screenshot-tabs">
+      <button class="screenshot-tab active" onclick="showScreen(0)">Queue View</button>
+      <button class="screenshot-tab" onclick="showScreen(1)">Conversion</button>
+      <button class="screenshot-tab" onclick="showScreen(2)">Results</button>
+    </div>
+    <div class="screenshots-container">
+      <img class="active" src="https://github.com/user-attachments/assets/d412599f-343c-4f87-8408-57ce27ef325d" alt="Queue view" />
+      <img src="https://github.com/user-attachments/assets/a811277a-9594-4bdb-9656-9c7e674a7e7d" alt="Conversion in progress" />
+      <img src="https://github.com/user-attachments/assets/fa5f1d53-da30-453f-a092-3261fd09cb3c" alt="Results view" />
+    </div>
+  </div>
 </section>
 
-</main>
-<!-- /main column -->
-<script id="quarto-html-after-body" type="application/javascript">
-window.document.addEventListener("DOMContentLoaded", function (event) {
-  const toggleBodyColorMode = (bsSheetEl) => {
-    const mode = bsSheetEl.getAttribute("data-mode");
-    const bodyEl = window.document.querySelector("body");
-    if (mode === "dark") {
-      bodyEl.classList.add("quarto-dark");
-      bodyEl.classList.remove("quarto-light");
-    } else {
-      bodyEl.classList.add("quarto-light");
-      bodyEl.classList.remove("quarto-dark");
-    }
-  }
-  const toggleBodyColorPrimary = () => {
-    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
-    if (bsSheetEl) {
-      toggleBodyColorMode(bsSheetEl);
-    }
-  }
-  toggleBodyColorPrimary();  
-  const icon = "";
-  const anchorJS = new window.AnchorJS();
-  anchorJS.options = {
-    placement: 'right',
-    icon: icon
-  };
-  anchorJS.add('.anchored');
-  const isCodeAnnotation = (el) => {
-    for (const clz of el.classList) {
-      if (clz.startsWith('code-annotation-')) {                     
-        return true;
-      }
-    }
-    return false;
-  }
-  const onCopySuccess = function(e) {
-    // button target
-    const button = e.trigger;
-    // don't keep focus
-    button.blur();
-    // flash "checked"
-    button.classList.add('code-copy-button-checked');
-    var currentTitle = button.getAttribute("title");
-    button.setAttribute("title", "Copied!");
-    let tooltip;
-    if (window.bootstrap) {
-      button.setAttribute("data-bs-toggle", "tooltip");
-      button.setAttribute("data-bs-placement", "left");
-      button.setAttribute("data-bs-title", "Copied!");
-      tooltip = new bootstrap.Tooltip(button, 
-        { trigger: "manual", 
-          customClass: "code-copy-button-tooltip",
-          offset: [0, -8]});
-      tooltip.show();    
-    }
-    setTimeout(function() {
-      if (tooltip) {
-        tooltip.hide();
-        button.removeAttribute("data-bs-title");
-        button.removeAttribute("data-bs-toggle");
-        button.removeAttribute("data-bs-placement");
-      }
-      button.setAttribute("title", currentTitle);
-      button.classList.remove('code-copy-button-checked');
-    }, 1000);
-    // clear code selection
-    e.clearSelection();
-  }
-  const getTextToCopy = function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
-        }
-      }
-      return codeEl.innerText;
-  }
-  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
-    text: getTextToCopy
-  });
-  clipboard.on('success', onCopySuccess);
-  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
-      text: getTextToCopy,
-      container: window.document.getElementById('quarto-embedded-source-code-modal')
-    });
-    clipboardModal.on('success', onCopySuccess);
-  }
-    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
-    var mailtoRegex = new RegExp(/^mailto:/);
-      var filterRegex = new RegExp('/' + window.location.host + '/');
-    var isInternal = (href) => {
-        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
-    }
-    // Inspect non-navigation links and adorn them if external
- 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
-    for (var i=0; i<links.length; i++) {
-      const link = links[i];
-      if (!isInternal(link.href)) {
-        // undo the damage that might have been done by quarto-nav.js in the case of
-        // links that we want to consider external
-        if (link.dataset.originalHref !== undefined) {
-          link.href = link.dataset.originalHref;
-        }
-      }
-    }
-  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
-    const config = {
-      allowHTML: true,
-      maxWidth: 500,
-      delay: 100,
-      arrow: false,
-      appendTo: function(el) {
-          return el.parentElement;
-      },
-      interactive: true,
-      interactiveBorder: 10,
-      theme: 'quarto',
-      placement: 'bottom-start',
-    };
-    if (contentFn) {
-      config.content = contentFn;
-    }
-    if (onTriggerFn) {
-      config.onTrigger = onTriggerFn;
-    }
-    if (onUntriggerFn) {
-      config.onUntrigger = onUntriggerFn;
-    }
-    window.tippy(el, config); 
-  }
-  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
-  for (var i=0; i<noterefs.length; i++) {
-    const ref = noterefs[i];
-    tippyHover(ref, function() {
-      // use id or data attribute instead here
-      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
-      try { href = new URL(href).hash; } catch {}
-      const id = href.replace(/^#\/?/, "");
-      const note = window.document.getElementById(id);
-      if (note) {
-        return note.innerHTML;
-      } else {
-        return "";
-      }
-    });
-  }
-  const xrefs = window.document.querySelectorAll('a.quarto-xref');
-  const processXRef = (id, note) => {
-    // Strip column container classes
-    const stripColumnClz = (el) => {
-      el.classList.remove("page-full", "page-columns");
-      if (el.children) {
-        for (const child of el.children) {
-          stripColumnClz(child);
-        }
-      }
-    }
-    stripColumnClz(note)
-    if (id === null || id.startsWith('sec-')) {
-      // Special case sections, only their first couple elements
-      const container = document.createElement("div");
-      if (note.children && note.children.length > 2) {
-        container.appendChild(note.children[0].cloneNode(true));
-        for (let i = 1; i < note.children.length; i++) {
-          const child = note.children[i];
-          if (child.tagName === "P" && child.innerText === "") {
-            continue;
-          } else {
-            container.appendChild(child.cloneNode(true));
-            break;
-          }
-        }
-        if (window.Quarto?.typesetMath) {
-          window.Quarto.typesetMath(container);
-        }
-        return container.innerHTML
-      } else {
-        if (window.Quarto?.typesetMath) {
-          window.Quarto.typesetMath(note);
-        }
-        return note.innerHTML;
-      }
-    } else {
-      // Remove any anchor links if they are present
-      const anchorLink = note.querySelector('a.anchorjs-link');
-      if (anchorLink) {
-        anchorLink.remove();
-      }
-      if (window.Quarto?.typesetMath) {
-        window.Quarto.typesetMath(note);
-      }
-      if (note.classList.contains("callout")) {
-        return note.outerHTML;
-      } else {
-        return note.innerHTML;
-      }
-    }
-  }
-  for (var i=0; i<xrefs.length; i++) {
-    const xref = xrefs[i];
-    tippyHover(xref, undefined, function(instance) {
-      instance.disable();
-      let url = xref.getAttribute('href');
-      let hash = undefined; 
-      if (url.startsWith('#')) {
-        hash = url;
-      } else {
-        try { hash = new URL(url).hash; } catch {}
-      }
-      if (hash) {
-        const id = hash.replace(/^#\/?/, "");
-        const note = window.document.getElementById(id);
-        if (note !== null) {
-          try {
-            const html = processXRef(id, note.cloneNode(true));
-            instance.setContent(html);
-          } finally {
-            instance.enable();
-            instance.show();
-          }
-        } else {
-          // See if we can fetch this
-          fetch(url.split('#')[0])
-          .then(res => res.text())
-          .then(html => {
-            const parser = new DOMParser();
-            const htmlDoc = parser.parseFromString(html, "text/html");
-            const note = htmlDoc.getElementById(id);
-            if (note !== null) {
-              const html = processXRef(id, note);
-              instance.setContent(html);
-            } 
-          }).finally(() => {
-            instance.enable();
-            instance.show();
-          });
-        }
-      } else {
-        // See if we can fetch a full url (with no hash to target)
-        // This is a special case and we should probably do some content thinning / targeting
-        fetch(url)
-        .then(res => res.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const htmlDoc = parser.parseFromString(html, "text/html");
-          const note = htmlDoc.querySelector('main.content');
-          if (note !== null) {
-            // This should only happen for chapter cross references
-            // (since there is no id in the URL)
-            // remove the first header
-            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
-              note.children[0].remove();
-            }
-            const html = processXRef(null, note);
-            instance.setContent(html);
-          } 
-        }).finally(() => {
-          instance.enable();
-          instance.show();
-        });
-      }
-    }, function(instance) {
-    });
-  }
-      let selectedAnnoteEl;
-      const selectorForAnnotation = ( cell, annotation) => {
-        let cellAttr = 'data-code-cell="' + cell + '"';
-        let lineAttr = 'data-code-annotation="' +  annotation + '"';
-        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-        return selector;
-      }
-      const selectCodeLines = (annoteEl) => {
-        const doc = window.document;
-        const targetCell = annoteEl.getAttribute("data-target-cell");
-        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-        const lineIds = lines.map((line) => {
-          return targetCell + "-" + line;
-        })
-        let top = null;
-        let height = null;
-        let parent = null;
-        if (lineIds.length > 0) {
-            //compute the position of the single el (top and bottom and make a div)
-            const el = window.document.getElementById(lineIds[0]);
-            top = el.offsetTop;
-            height = el.offsetHeight;
-            parent = el.parentElement.parentElement;
-          if (lineIds.length > 1) {
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-            height = bottom - top;
-          }
-          if (top !== null && height !== null && parent !== null) {
-            // cook up a div (if necessary) and position it 
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
-            }
-            div.style.top = top - 2 + "px";
-            div.style.height = height + 4 + "px";
-            div.style.left = 0;
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
-            }
-            gutterDiv.style.top = top - 2 + "px";
-            gutterDiv.style.height = height + 4 + "px";
-          }
-          selectedAnnoteEl = annoteEl;
-        }
-      };
-      const unselectCodeLines = () => {
-        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-        elementsIds.forEach((elId) => {
-          const div = window.document.getElementById(elId);
-          if (div) {
-            div.remove();
-          }
-        });
-        selectedAnnoteEl = undefined;
-      };
-        // Handle positioning of the toggle
-    window.addEventListener(
-      "resize",
-      throttle(() => {
-        elRect = undefined;
-        if (selectedAnnoteEl) {
-          selectCodeLines(selectedAnnoteEl);
-        }
-      }, 10)
-    );
-    function throttle(fn, ms) {
-    let throttle = false;
-    let timer;
-      return (...args) => {
-        if(!throttle) { // first call gets through
-            fn.apply(this, args);
-            throttle = true;
-        } else { // all the others get throttled
-            if(timer) clearTimeout(timer); // cancel #2
-            timer = setTimeout(() => {
-              fn.apply(this, args);
-              timer = throttle = false;
-            }, ms);
-        }
-      };
-    }
-      // Attach click handler to the DT
-      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-      for (const annoteDlNode of annoteDls) {
-        annoteDlNode.addEventListener('click', (event) => {
-          const clickedEl = event.target;
-          if (clickedEl !== selectedAnnoteEl) {
-            unselectCodeLines();
-            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-            if (activeEl) {
-              activeEl.classList.remove('code-annotation-active');
-            }
-            selectCodeLines(clickedEl);
-            clickedEl.classList.add('code-annotation-active');
-          } else {
-            // Unselect the line
-            unselectCodeLines();
-            clickedEl.classList.remove('code-annotation-active');
-          }
-        });
-      }
-  const findCites = (el) => {
-    const parentEl = el.parentElement;
-    if (parentEl) {
-      const cites = parentEl.dataset.cites;
-      if (cites) {
-        return {
-          el,
-          cites: cites.split(' ')
-        };
-      } else {
-        return findCites(el.parentElement)
-      }
-    } else {
-      return undefined;
-    }
-  };
-  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-  for (var i=0; i<bibliorefs.length; i++) {
-    const ref = bibliorefs[i];
-    const citeInfo = findCites(ref);
-    if (citeInfo) {
-      tippyHover(citeInfo.el, function() {
-        var popup = window.document.createElement('div');
-        citeInfo.cites.forEach(function(cite) {
-          var citeDiv = window.document.createElement('div');
-          citeDiv.classList.add('hanging-indent');
-          citeDiv.classList.add('csl-entry');
-          var biblioDiv = window.document.getElementById('ref-' + cite);
-          if (biblioDiv) {
-            citeDiv.innerHTML = biblioDiv.innerHTML;
-          }
-          popup.appendChild(citeDiv);
-        });
-        return popup.innerHTML;
-      });
-    }
-  }
-});
+<!-- FEATURES -->
+<section id="features">
+  <div class="container fade-up">
+    <div class="section-label">✦ Features</div>
+    <div class="section-title">Everything you need.<br>Nothing you don't.</div>
+    <div class="section-subtitle">A complete conversion workflow — from drag-and-drop intake to polished Markdown export.</div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon fi-purple">⚡</div>
+        <h3>Drag &amp; Drop Queue</h3>
+        <p>Drag files directly into the queue, add entire folders (top-level), or paste website URLs. Batch processing handles dozens of documents in one session.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-gold">🔄</div>
+        <h3>Real-Time Progress</h3>
+        <p>Elapsed timer, per-document page counter, and a visual progress bar keep you informed. Pause, resume, or cancel at any time — including in-flight HTTP requests.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-green">👁️</div>
+        <h3>Live Preview</h3>
+        <p>Toggle between rendered Markdown and raw source. Select individual files from results, copy output, or export as one combined file or separate files.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-purple">🌐</div>
+        <h3>URL → Markdown</h3>
+        <p>Paste any web URL and convert article content to Markdown via the Defuddle API. Responses include YAML frontmatter metadata when available.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-gold">🔍</div>
+        <h3>Triple OCR Engine</h3>
+        <p>Three OCR paths to handle any document: Azure Document Intelligence, local Tesseract, or OpenAI-compatible vision endpoints like LM Studio.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon fi-green">🎨</div>
+        <h3>Perfect Dark Theme</h3>
+        <p>Four theme modes including the custom Perfect Dark palette with refined nav and title chrome, plus a centered content column on ultrawide displays.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT'S NEW -->
+<section id="whats-new" class="fork-section">
+  <div class="container fade-up">
+    <div class="section-label">✦ What's New in This Fork</div>
+    <div class="section-title">Built on a great foundation.<br>Pushed further.</div>
+    <div class="section-subtitle">Markdown Alchemy is a fork of <a href="https://github.com/imadreamerboy/markitdown-gui" style="color:var(--accent);text-decoration:underline">markitdown-gui</a> by Jonas, with deeper UX polish and expanded capabilities.</div>
+    <div class="fork-grid">
+      <div class="fork-item">
+        <div class="fork-dot"></div>
+        <div>
+          <h4>Live Progress Dashboard</h4>
+          <p>Elapsed time, document count, and per-document page counter update in real time during conversion.</p>
+        </div>
+      </div>
+      <div class="fork-item">
+        <div class="fork-dot" style="background:var(--gold)"></div>
+        <div>
+          <h4>OpenAI-Compatible Vision OCR</h4>
+          <p>Point the app at any OpenAI-style vision endpoint for rasterized PDFs and images. Optional "always OCR" toggle for stubborn scans.</p>
+        </div>
+      </div>
+      <div class="fork-item">
+        <div class="fork-dot" style="background:var(--success)"></div>
+        <div>
+          <h4>True Cancellation</h4>
+          <p>Cancel tears down in-flight HTTP requests where applicable, with clearer progress feedback across PDF and model operations.</p>
+        </div>
+      </div>
+      <div class="fork-item">
+        <div class="fork-dot" style="background:#f472b6"></div>
+        <div>
+          <h4>Add Folder &amp; Extended i18n</h4>
+          <p>Import top-level files from a directory with filter support. English and Chinese strings cover every new UI element.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section id="install">
+  <div class="container fade-up">
+    <div class="section-label">✦ Installation</div>
+    <div class="section-title">Up and running<br>in 60 seconds.</div>
+    <div class="section-subtitle">Grab a prebuilt binary or run from source with two commands.</div>
+    <div class="install-cols">
+      <div class="install-card">
+        <h3>⚡ Quick Start (uv)</h3>
+        <div class="desc">Recommended. Requires Python 3.10+ and uv.</div>
+        <pre><code>uv sync
+uv run python -m markitdowngui.main</code></pre>
+      </div>
+      <div class="install-card">
+        <h3>📦 Alternative (pip)</h3>
+        <div class="desc">Works with any standard Python environment.</div>
+        <pre><code>pip install -e .[dev]
+python -m markitdowngui.main</code></pre>
+      </div>
+    </div>
+    <div class="install-cols" style="margin-top:1.25rem">
+      <div class="install-card">
+        <h3>🏗️ Build Standalone</h3>
+        <div class="desc">Create a distributable executable.</div>
+        <pre><code>uv pip install -e .[dev]
+pyinstaller MarkItDown.spec --clean --noconfirm</code></pre>
+      </div>
+      <div class="install-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1rem;">
+        <div style="font-size:3rem;">📥</div>
+        <h3>Or Just Download</h3>
+        <div class="desc" style="margin-bottom:0">Prebuilt binaries when available.</div>
+        <a href="https://github.com/Ayrnio/MarkdownAlchemy/releases" class="btn btn-primary" style="padding:12px 24px;font-size:0.88rem;margin-top:0.5rem;">View Releases →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OCR -->
+<section id="ocr" class="fork-section">
+  <div class="container fade-up">
+    <div class="section-label">✦ OCR Configuration</div>
+    <div class="section-title">Three engines.<br>Every document covered.</div>
+    <div class="section-subtitle">OCR is optional and disabled by default. Enable the engine that fits your workflow.</div>
+    <div class="ocr-cards">
+      <div class="ocr-card">
+        <span class="ocr-emoji">🔷</span>
+        <h4>Azure Document Intelligence</h4>
+        <p>Cloud-powered OCR with 500 free pages/month. Set your endpoint in Settings and the <code style="color:var(--accent);font-size:0.82rem">AZURE_OCR_API_KEY</code> env var.</p>
+      </div>
+      <div class="ocr-card">
+        <span class="ocr-emoji">⬡</span>
+        <h4>Tesseract (Local)</h4>
+        <p>Fully offline. Install the Tesseract binary and set its path in Settings if it's not on your system PATH.</p>
+      </div>
+      <div class="ocr-card">
+        <span class="ocr-emoji">🧠</span>
+        <h4>OpenAI-Compatible Vision</h4>
+        <p>Point at LM Studio or any OpenAI-style endpoint. Configure base URL, model, and prompt directly in-app. Optional "always OCR" for difficult PDFs.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SHORTCUTS -->
+<section id="shortcuts">
+  <div class="container fade-up">
+    <div class="section-label">✦ Keyboard Shortcuts</div>
+    <div class="section-title">Hands on the keys.<br>Eyes on the Markdown.</div>
+    <div class="shortcuts-wrap">
+      <table>
+        <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>Ctrl</kbd> + <kbd>O</kbd></td><td>Open files</td></tr>
+          <tr><td><kbd>Ctrl</kbd> + <kbd>S</kbd></td><td>Save output</td></tr>
+          <tr><td><kbd>Ctrl</kbd> + <kbd>C</kbd></td><td>Copy output</td></tr>
+          <tr><td><kbd>Ctrl</kbd> + <kbd>B</kbd></td><td>Start conversion</td></tr>
+          <tr><td><kbd>Ctrl</kbd> + <kbd>P</kbd></td><td>Pause / Resume</td></tr>
+          <tr><td><kbd>Ctrl</kbd> + <kbd>L</kbd></td><td>Clear queue</td></tr>
+          <tr><td><kbd>Ctrl</kbd> + <kbd>K</kbd></td><td>Show shortcuts</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>Cancel conversion</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-brand">Markdown Alchemy</div>
+    <p style="color:var(--text-secondary);font-size:0.9rem;">A maintained fork of <a href="https://github.com/imadreamerboy/markitdown-gui" style="color:var(--accent)">markitdown-gui</a> by Jonas, powered by Microsoft <a href="https://github.com/microsoft/markitdown" style="color:var(--accent)">MarkItDown</a>.</p>
+    <div class="footer-links">
+      <a href="https://github.com/Ayrnio/MarkdownAlchemy">GitHub</a>
+      <a href="https://github.com/Ayrnio/MarkdownAlchemy/releases">Releases</a>
+      <a href="https://github.com/microsoft/markitdown">MarkItDown</a>
+      <a href="https://qfluentwidgets.com/">QFluentWidgets</a>
+      <a href="https://lucide.dev/icons/infinity">Lucide Icons</a>
+    </div>
+    <div class="footer-copy">
+      Licensed under GPLv3 for non-commercial use. Commercial use requires a separate license.<br>
+      Built with PySide6 (LGPLv3) · PySide6-Fluent-Widgets · MarkItDown (MIT)
+    </div>
+  </div>
+</footer>
+
+<script>
+// Screenshot tab switcher
+function showScreen(index) {
+  document.querySelectorAll('.screenshot-tab').forEach((t,i) => t.classList.toggle('active', i===index));
+  document.querySelectorAll('.screenshots-container img').forEach((img,i) => img.classList.toggle('active', i===index));
+}
+
+// Fade-in on scroll
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }});
+}, { threshold: 0.15 });
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
 </script>
-</div> <!-- /content -->
 
-
-
-
-</body></html>
+</body>
+</html>
