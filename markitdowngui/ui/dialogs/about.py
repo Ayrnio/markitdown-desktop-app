@@ -41,7 +41,9 @@ class AboutDialog(QDialog):
         self.setMinimumSize(560, 420)
 
     def _build_about_html(self) -> str:
-        from markitdowngui.__init__ import __version__ as APP_VERSION
+        from markitdowngui.version_info import get_app_version
+
+        APP_VERSION = get_app_version()
 
         python_ver = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
         try:

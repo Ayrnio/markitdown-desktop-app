@@ -24,6 +24,7 @@ BASE_DATAS = (
     ("markitdowngui/resources/markitdown-gui.ico", "markitdowngui/resources"),
     ("markitdowngui/resources/moon.svg", "markitdowngui/resources"),
     ("markitdowngui/resources/sun.svg", "markitdowngui/resources"),
+    ("markitdowngui/resources/ayrn_nav_logo.png", "markitdowngui/resources"),
     ("LICENSE", "."),
 )
 OPTIONAL_DATA_PACKAGES = (

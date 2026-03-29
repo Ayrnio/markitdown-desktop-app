@@ -12,8 +12,11 @@ from markitdowngui.ui.dialogs.about import AboutDialog
 from markitdowngui.ui.help_interface import HelpInterface
 from markitdowngui.ui.home_interface import HomeInterface
 from markitdowngui.ui.settings_interface import SettingsInterface
+from markitdowngui.ui.nav_logo_icon import make_ayrn_nav_return_icon
+from markitdowngui.ui.nav_return_paint import patch_nav_return_button_large_icon
 from markitdowngui.ui.nav_toggle_icon import make_nav_menu_toggle_icon
 from markitdowngui.ui.themes import apply_app_theme, build_app_stylesheet
+from markitdowngui.ui.title_bar_version_badge import install_title_bar_version_badge
 from markitdowngui.utils.logger import AppLogger
 from markitdowngui.utils.translations import DEFAULT_LANG, get_translation
 
@@ -36,6 +39,7 @@ class MainWindow(FluentWindow):
         self._init_window()
         self._init_interfaces()
         self._init_navigation()
+        self._title_bar_version_badge = install_title_bar_version_badge(self.titleBar)
         self.apply_theme()
 
         AppLogger.info("MainWindow initialized with FluentWindow")
@@ -133,11 +137,19 @@ class MainWindow(FluentWindow):
         )
         self._on_main_stack_page_changed(self.stackedWidget.currentIndex())
 
+        patch_nav_return_button_large_icon(self.navigationInterface.panel.returnButton)
+
     def _apply_nav_menu_button_icon(self, theme_key: str) -> None:
         """Replace default Fluent MENU (hamburger) bars with a loop mark on the nav toggle."""
         self.navigationInterface.panel.menuButton.setIcon(
             make_nav_menu_toggle_icon(theme_key)
         )
+
+    def _apply_nav_return_button_icon(self) -> None:
+        """Use AYRN logo instead of the default back arrow when the asset is present."""
+        icon = make_ayrn_nav_return_icon()
+        if not icon.isNull():
+            self.navigationInterface.panel.returnButton.setIcon(icon)
 
     def _available_content_host_width(self) -> int:
         """Width of the area to the right of the nav (not the full window)."""
@@ -202,8 +214,10 @@ class MainWindow(FluentWindow):
         effective = apply_app_theme(theme_mode)
         self.setStyleSheet(build_app_stylesheet(effective))
         self._apply_title_bar_chrome(theme_key=effective)
+        self._title_bar_version_badge.apply_theme(theme_key=effective)
         self._apply_navigation_panel_chrome(theme_key=effective)
         self._apply_nav_menu_button_icon(effective)
+        self._apply_nav_return_button_icon()
         self.homeInterface.apply_theme_styles(effective)
 
     def _apply_title_bar_chrome(self, *, theme_key: str) -> None:
