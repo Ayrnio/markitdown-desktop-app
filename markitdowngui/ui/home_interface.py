@@ -62,8 +62,8 @@ from markitdowngui.utils.logger import AppLogger
 from markitdowngui.utils.translations import DEFAULT_LANG
 
 
-class StableHomeCard(ElevatedCardWidget):
-    """Same look/shadow as ``ElevatedCardWidget`` without the hover ``pos`` nudge (``-3`` px)."""
+class StableElevatedCard(ElevatedCardWidget):
+    """``ElevatedCardWidget`` look/shadow without the hover ``pos`` nudge (``-3`` px)."""
 
     def enterEvent(self, event):
         super(ElevatedCardWidget, self).enterEvent(event)
@@ -129,7 +129,7 @@ class HomeInterface(QWidget):
         self.main_layout.setContentsMargins(12, 12, 12, 12)
         self.main_layout.setSpacing(10)
 
-        self.empty_card = StableHomeCard(self)
+        self.empty_card = StableElevatedCard(self)
         self.empty_card.setObjectName("HomeEmptyCard")
         self.empty_card.setSizePolicy(
             QSizePolicy.Policy.Expanding,
@@ -162,13 +162,27 @@ class HomeInterface(QWidget):
         )
         self.empty_select_btn.setIcon(FIF.FOLDER_ADD)
         self.empty_select_btn.setMinimumHeight(52)
-        self.empty_select_btn.setMinimumWidth(480)
         self.empty_select_btn.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed,
         )
         self.empty_select_btn.clicked.connect(self.browse_files)
-        empty_layout.addWidget(self.empty_select_btn)
+
+        self.empty_folder_btn = PushButton(self.translate("home_add_folder_button"))
+        self.empty_folder_btn.setIcon(FIF.FOLDER)
+        self.empty_folder_btn.setMinimumHeight(52)
+        self.empty_folder_btn.setToolTip(self.translate("browse_folder_tooltip"))
+        self.empty_folder_btn.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed,
+        )
+        self.empty_folder_btn.clicked.connect(self._browse_folder_from_empty)
+
+        empty_files_row = QHBoxLayout()
+        empty_files_row.setSpacing(10)
+        empty_files_row.addWidget(self.empty_select_btn, 1)
+        empty_files_row.addWidget(self.empty_folder_btn, 1)
+        empty_layout.addLayout(empty_files_row)
 
         self.empty_url_input = UrlInputBar(self.translate, self.empty_card)
         self.empty_url_input.url_submitted.connect(self.submit_url)
@@ -181,7 +195,7 @@ class HomeInterface(QWidget):
         empty_layout.addWidget(self.supported_formats_label)
         empty_layout.addStretch(1)
 
-        self.queue_card = ElevatedCardWidget(self)
+        self.queue_card = StableElevatedCard(self)
         queue_layout = QVBoxLayout(self.queue_card)
         queue_layout.setContentsMargins(12, 12, 12, 12)
         queue_layout.setSpacing(10)
@@ -189,11 +203,16 @@ class HomeInterface(QWidget):
         queue_header = QHBoxLayout()
         queue_header.setSpacing(8)
         self.queue_title = BodyLabel(self.translate("home_queue_title"))
+        self.add_folder_btn = PillPushButton(self.translate("home_add_folder_button"))
+        self.add_folder_btn.setIcon(FIF.FOLDER)
+        self.add_folder_btn.setToolTip(self.translate("browse_folder_tooltip"))
+        self.add_folder_btn.clicked.connect(self._browse_folder_from_queue_header)
         self.add_files_btn = PillPushButton(self.translate("home_add_files_button"))
         self.add_files_btn.setIcon(FIF.ADD)
         self.add_files_btn.clicked.connect(self.browse_files)
         queue_header.addWidget(self.queue_title)
         queue_header.addStretch(1)
+        queue_header.addWidget(self.add_folder_btn)
         queue_header.addWidget(self.add_files_btn)
         queue_layout.addLayout(queue_header)
 
@@ -261,7 +280,7 @@ class HomeInterface(QWidget):
         controls.addWidget(self.cancel_button)
         queue_layout.addLayout(controls)
 
-        self.results_card = ElevatedCardWidget(self)
+        self.results_card = StableElevatedCard(self)
         results_layout = QVBoxLayout(self.results_card)
         results_layout.setContentsMargins(12, 12, 12, 12)
         results_layout.setSpacing(10)
@@ -489,8 +508,31 @@ class HomeInterface(QWidget):
         if files:
             self._add_sources_to_queue(files)
 
+    def _browse_folder_from_empty(self) -> None:
+        self._import_flat_folder(accepted_extensions=["*.*"])
+
+    def _browse_folder_from_queue_header(self) -> None:
+        ex = list(self.filePanel.drop.accepted_extensions)
+        self._import_flat_folder(accepted_extensions=ex)
+
+    def _import_flat_folder(self, *, accepted_extensions: list[str]) -> None:
+        folder = QFileDialog.getExistingDirectory(
+            self, self.translate("select_folder_title"), ""
+        )
+        if not folder:
+            return
+        paths = FileManager.list_flat_files_in_directory(folder, accepted_extensions)
+        if not paths:
+            QMessageBox.information(
+                self,
+                self.translate("folder_import_title"),
+                self.translate("folder_no_matching_files"),
+            )
+            return
+        self._add_sources_to_queue(paths)
+
     def handle_files_added(self, files: list[str]) -> None:
-        self._add_sources_to_queue(files, add_to_panel=False)
+        self._add_sources_to_queue(files)
 
     def submit_url(self, url: str) -> None:
         candidate = url.strip()

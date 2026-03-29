@@ -12,6 +12,7 @@ from markitdowngui.ui.dialogs.about import AboutDialog
 from markitdowngui.ui.help_interface import HelpInterface
 from markitdowngui.ui.home_interface import HomeInterface
 from markitdowngui.ui.settings_interface import SettingsInterface
+from markitdowngui.ui.nav_toggle_icon import make_nav_menu_toggle_icon
 from markitdowngui.ui.themes import apply_app_theme, build_app_stylesheet
 from markitdowngui.utils.logger import AppLogger
 from markitdowngui.utils.translations import DEFAULT_LANG, get_translation
@@ -132,6 +133,12 @@ class MainWindow(FluentWindow):
         )
         self._on_main_stack_page_changed(self.stackedWidget.currentIndex())
 
+    def _apply_nav_menu_button_icon(self, theme_key: str) -> None:
+        """Replace default Fluent MENU (hamburger) bars with a loop mark on the nav toggle."""
+        self.navigationInterface.panel.menuButton.setIcon(
+            make_nav_menu_toggle_icon(theme_key)
+        )
+
     def _available_content_host_width(self) -> int:
         """Width of the area to the right of the nav (not the full window)."""
         hw = self._main_content_host.width()
@@ -196,6 +203,7 @@ class MainWindow(FluentWindow):
         self.setStyleSheet(build_app_stylesheet(effective))
         self._apply_title_bar_chrome(theme_key=effective)
         self._apply_navigation_panel_chrome(theme_key=effective)
+        self._apply_nav_menu_button_icon(effective)
         self.homeInterface.apply_theme_styles(effective)
 
     def _apply_title_bar_chrome(self, *, theme_key: str) -> None:

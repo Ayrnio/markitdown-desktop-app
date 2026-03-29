@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
-from typing import List, Dict
+from pathlib import Path
+from typing import List
 
 class FileManager:
     """Handles file operations and tracking of recent files."""
@@ -18,6 +19,55 @@ class FileManager:
         "Archives": "*.zip",
         "All Files": "*.*"
     }
+
+    @staticmethod
+    def path_matches_accepted_extensions(filepath: str, accepted_extensions: list[str]) -> bool:
+        """Whether ``filepath`` matches the drop-widget style filter (same as legacy isAcceptedFile logic).
+
+        ``accepted_extensions`` entries may contain space-separated globs, e.g. ``\"*.xlsx *.xls\"``.
+        If ``*.*`` appears as a whole entry, all files match.
+        """
+        if not accepted_extensions:
+            return False
+        if any(ext == "*.*" for ext in accepted_extensions):
+            return True
+        lower_path = filepath.lower()
+        suffixes: list[str] = []
+        for entry in accepted_extensions:
+            for token in entry.split():
+                t = token.strip().lower()
+                if not t:
+                    continue
+                if t == "*.*":
+                    return True
+                if t.startswith("*."):
+                    suffixes.append(t[1:])
+        if not suffixes:
+            return False
+        return any(lower_path.endswith(suf) for suf in suffixes)
+
+    @staticmethod
+    def list_flat_files_in_directory(directory: str, accepted_extensions: list[str]) -> list[str]:
+        """List files directly inside ``directory`` (non-recursive). Subfolders are ignored."""
+        root = Path(directory)
+        if not root.is_dir():
+            return []
+        out: list[str] = []
+        try:
+            entries = list(root.iterdir())
+        except OSError:
+            return []
+        for child in entries:
+            try:
+                if not child.is_file():
+                    continue
+            except OSError:
+                continue
+            path_str = str(child)
+            if FileManager.path_matches_accepted_extensions(path_str, accepted_extensions):
+                out.append(path_str)
+        out.sort(key=lambda p: p.lower())
+        return out
 
     @staticmethod
     def get_backup_dir() -> str:

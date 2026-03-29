@@ -1,4 +1,16 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, QComboBox, QPushButton, QFileDialog, QAbstractItemView, QMenu
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QComboBox,
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QListWidget,
+    QMenu,
+    QMessageBox,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 from PySide6.QtCore import Qt, Signal, QPoint
 from markitdowngui.core.file_utils import FileManager
 
@@ -32,6 +44,11 @@ class DropWidget(QWidget):
         self.browseButton.clicked.connect(self.open_file_dialog)
         filterLayout.addWidget(self.browseButton)
 
+        self.browseFolderButton = QPushButton(self.translate("browse_folder_button"))
+        self.browseFolderButton.setToolTip(self.translate("browse_folder_tooltip"))
+        self.browseFolderButton.clicked.connect(self.open_folder_dialog)
+        filterLayout.addWidget(self.browseFolderButton)
+
         # List widget and drop label
         self.listWidget = QListWidget()
         self.listWidget.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
@@ -60,6 +77,8 @@ class DropWidget(QWidget):
         self.dropLabel.setToolTip(self.translate("drop_widget_tooltip"))
         self.browseButton.setText(self.translate("browse_files_button"))
         self.browseButton.setToolTip(self.translate("browse_files_tooltip"))
+        self.browseFolderButton.setText(self.translate("browse_folder_button"))
+        self.browseFolderButton.setToolTip(self.translate("browse_folder_tooltip"))
         btn = getattr(self, "clearAllHeaderButton", None)
         if btn is not None:
             btn.setText(self.translate("clear_all_button"))
@@ -75,10 +94,9 @@ class DropWidget(QWidget):
         self.accepted_extensions = extensions
     
     def isAcceptedFile(self, filepath):
-        if "*.*" in self.accepted_extensions:
-            return True
-        return any(filepath.lower().endswith(ext.replace("*", "")) 
-                  for ext in self.accepted_extensions)
+        return FileManager.path_matches_accepted_extensions(
+            filepath, self.accepted_extensions
+        )
     
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
@@ -100,10 +118,27 @@ class DropWidget(QWidget):
     def open_file_dialog(self):
         files, _ = QFileDialog.getOpenFileNames(self, self.translate("select_files_title"), "", self.translate("all_files_filter"))
         if files:
-            for file in files:
-                if self.isAcceptedFile(file):
-                    self.listWidget.addItem(file)
-            self.filesAdded.emit(files)
+            accepted = [f for f in files if self.isAcceptedFile(f)]
+            if accepted:
+                self.filesAdded.emit(accepted)
+
+    def open_folder_dialog(self):
+        folder = QFileDialog.getExistingDirectory(
+            self, self.translate("select_folder_title"), ""
+        )
+        if not folder:
+            return
+        paths = FileManager.list_flat_files_in_directory(
+            folder, self.accepted_extensions
+        )
+        if not paths:
+            QMessageBox.information(
+                self,
+                self.translate("folder_import_title"),
+                self.translate("folder_no_matching_files"),
+            )
+            return
+        self.filesAdded.emit(paths)
     
     def _show_context_menu(self, pos: QPoint):
         menu = QMenu(self)

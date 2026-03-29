@@ -68,4 +68,35 @@ def test_save_and_get_backup_dir(file_manager):
     
     assert os.path.exists(backup_path)
     with open(backup_path, "r", encoding="utf-8") as f:
-        assert f.read() == content 
+        assert f.read() == content
+
+
+def test_path_matches_accepted_extensions():
+    assert FileManager.path_matches_accepted_extensions(r"C:\a\doc.PDF", ["*.pdf"])
+    assert FileManager.path_matches_accepted_extensions("x.xlsx", ["*.xlsx *.xls"])
+    assert FileManager.path_matches_accepted_extensions("y.xls", ["*.xlsx *.xls"])
+    assert not FileManager.path_matches_accepted_extensions("z.pdf", ["*.xlsx *.xls"])
+    assert FileManager.path_matches_accepted_extensions("anything", ["*.*"])
+    assert not FileManager.path_matches_accepted_extensions("nope", [])
+
+
+def test_list_flat_files_in_directory_non_recursive(tmp_path):
+    d = tmp_path / "folder"
+    d.mkdir()
+    (d / "a.pdf").touch()
+    (d / "b.txt").touch()
+    sub = d / "sub"
+    sub.mkdir()
+    (sub / "nested.pdf").touch()
+
+    pdf_only = FileManager.list_flat_files_in_directory(str(d), ["*.pdf"])
+    assert pdf_only == [str(d / "a.pdf")]
+
+    all_files = FileManager.list_flat_files_in_directory(str(d), ["*.*"])
+    assert set(all_files) == {str(d / "a.pdf"), str(d / "b.txt")}
+
+
+def test_list_flat_files_in_directory_not_a_dir(tmp_path):
+    f = tmp_path / "file.txt"
+    f.touch()
+    assert FileManager.list_flat_files_in_directory(str(f), ["*.*"]) == []
