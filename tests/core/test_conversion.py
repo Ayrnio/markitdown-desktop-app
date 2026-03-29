@@ -37,10 +37,21 @@ def conversion(monkeypatch):
     return importlib.reload(module)
 
 
+def test_conversion_options_resolved_vision_prompt(conversion):
+    from markitdowngui.core.vision_prompt_defaults import DEFAULT_VISION_SYSTEM_PROMPT
+
+    assert (
+        conversion.ConversionOptions().resolved_llm_vision_system_prompt
+        == DEFAULT_VISION_SYSTEM_PROMPT
+    )
+    custom = conversion.ConversionOptions(llm_vision_system_prompt="  trim me  ")
+    assert custom.resolved_llm_vision_system_prompt == "trim me"
+
+
 def test_convert_file_uses_markitdown_when_ocr_disabled(monkeypatch, conversion):
     calls = []
 
-    def fake_convert(file_path, options, use_docintel=False):
+    def fake_convert(file_path, options, use_docintel=False, llm_prompt=None):
         calls.append((file_path, use_docintel))
         return "native text"
 
@@ -119,7 +130,7 @@ def test_convert_url_surfaces_request_errors(monkeypatch, conversion):
 def test_convert_image_prefers_docintel_when_configured(monkeypatch, conversion):
     calls = []
 
-    def fake_convert(file_path, options, use_docintel=False):
+    def fake_convert(file_path, options, use_docintel=False, llm_prompt=None):
         calls.append(use_docintel)
         return "azure text"
 
@@ -143,7 +154,7 @@ def test_convert_image_prefers_docintel_when_configured(monkeypatch, conversion)
 
 
 def test_convert_image_falls_back_to_local_ocr(monkeypatch, conversion):
-    def fake_convert(_file_path, _options, use_docintel=False):
+    def fake_convert(_file_path, _options, use_docintel=False, llm_prompt=None):
         if use_docintel:
             raise RuntimeError("azure unavailable")
         return ""
@@ -169,7 +180,7 @@ def test_convert_image_falls_back_to_local_ocr(monkeypatch, conversion):
 def test_convert_pdf_keeps_native_text_when_available(monkeypatch, conversion):
     calls = []
 
-    def fake_convert(_file_path, _options, use_docintel=False):
+    def fake_convert(_file_path, _options, use_docintel=False, llm_prompt=None):
         calls.append(use_docintel)
         return "native pdf text"
 
@@ -192,7 +203,7 @@ def test_convert_pdf_keeps_native_text_when_available(monkeypatch, conversion):
 def test_convert_pdf_falls_back_to_docintel(monkeypatch, conversion):
     calls = []
 
-    def fake_convert(_file_path, _options, use_docintel=False):
+    def fake_convert(_file_path, _options, use_docintel=False, llm_prompt=None):
         calls.append(use_docintel)
         if use_docintel:
             return "azure pdf text"
@@ -218,7 +229,7 @@ def test_convert_pdf_falls_back_to_docintel(monkeypatch, conversion):
 
 
 def test_convert_file_with_details_reports_azure_backend(monkeypatch, conversion):
-    def fake_convert(_file_path, _options, use_docintel=False):
+    def fake_convert(_file_path, _options, use_docintel=False, llm_prompt=None):
         if use_docintel:
             return "azure pdf text"
         return ""
@@ -250,7 +261,7 @@ def test_convert_pdf_falls_back_to_local_ocr_after_native_markitdown_failure(
 ):
     calls = []
 
-    def fake_convert(_file_path, _options, use_docintel=False):
+    def fake_convert(_file_path, _options, use_docintel=False, llm_prompt=None):
         calls.append(use_docintel)
         if not use_docintel:
             raise RuntimeError("native parser failed")
@@ -272,10 +283,64 @@ def test_convert_pdf_falls_back_to_local_ocr_after_native_markitdown_failure(
     assert calls == [False]
 
 
+def test_convert_pdf_ocr_force_skips_native_markitdown(monkeypatch, conversion):
+    calls = []
+
+    def fake_native(_file_path, _options, use_docintel=False, llm_prompt=None):
+        calls.append(use_docintel)
+        return "embedded text"
+
+    monkeypatch.setattr(conversion, "_convert_with_markitdown", fake_native)
+    monkeypatch.setattr(
+        conversion,
+        "_convert_pdf_with_local_ocr",
+        lambda *_args, **_kwargs: "forced ocr",
+    )
+
+    result = conversion.convert_file(
+        "doc.pdf",
+        conversion.ConversionOptions(
+            ocr_enabled=True,
+            ocr_method=conversion.OCR_METHOD_TESSERACT,
+            ocr_force_pdf=True,
+        ),
+    )
+
+    assert result == "forced ocr"
+    assert calls == []
+
+
+def test_convert_pdf_ocr_force_auto_skips_native_then_local(monkeypatch, conversion):
+    calls = []
+
+    def fake_native(_file_path, _options, use_docintel=False, llm_prompt=None):
+        calls.append(use_docintel)
+        return "embedded"
+
+    monkeypatch.setattr(conversion, "_convert_with_markitdown", fake_native)
+    monkeypatch.setattr(
+        conversion,
+        "_convert_pdf_with_local_ocr",
+        lambda *_args, **_kwargs: "local only",
+    )
+
+    result = conversion.convert_file(
+        "doc.pdf",
+        conversion.ConversionOptions(
+            ocr_enabled=True,
+            ocr_method=conversion.OCR_METHOD_AUTO,
+            ocr_force_pdf=True,
+        ),
+    )
+
+    assert result == "local only"
+    assert calls == []
+
+
 def test_convert_pdf_falls_back_to_local_ocr_after_docintel_failure(monkeypatch, conversion):
     calls = []
 
-    def fake_convert(_file_path, _options, use_docintel=False):
+    def fake_convert(_file_path, _options, use_docintel=False, llm_prompt=None):
         calls.append(use_docintel)
         if use_docintel:
             raise RuntimeError("azure unavailable")
@@ -304,7 +369,7 @@ def test_convert_pdf_surfaces_azure_failure_when_local_ocr_is_unavailable(
     monkeypatch,
     conversion,
 ):
-    def fake_convert(_file_path, _options, use_docintel=False):
+    def fake_convert(_file_path, _options, use_docintel=False, llm_prompt=None):
         if use_docintel:
             raise RuntimeError("azure auth failed")
         return ""
@@ -429,6 +494,248 @@ def test_convert_with_markitdown_uses_default_azure_credential_without_api_key(
     assert isinstance(captured["docintel_credential"], FakeDefaultAzureCredential)
 
 
+def test_convert_with_markitdown_passes_openai_compatible_llm_client(monkeypatch, conversion):
+    captured = {}
+
+    class FakeResult:
+        text_content = "with llm"
+
+    class FakeMarkItDown:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+        def convert(self, _file_path):
+            return FakeResult()
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            captured["openai_kwargs"] = kwargs
+
+    openai_module = types.ModuleType("openai")
+    openai_module.OpenAI = FakeOpenAI
+
+    monkeypatch.setitem(
+        sys.modules,
+        "markitdown",
+        types.SimpleNamespace(MarkItDown=FakeMarkItDown),
+    )
+    monkeypatch.setitem(sys.modules, "openai", openai_module)
+
+    result = conversion._convert_with_markitdown(
+        "photo.png",
+        conversion.ConversionOptions(
+            llm_base_url="http://localhost:1234/v1",
+            llm_model="test-vision",
+        ),
+    )
+
+    assert result == "with llm"
+    assert captured["openai_kwargs"] == {
+        "base_url": "http://localhost:1234/v1",
+        "api_key": "lm-studio",
+    }
+    assert isinstance(captured["llm_client"], FakeOpenAI)
+    assert captured["llm_model"] == "test-vision"
+
+
+def test_convert_with_markitdown_passes_llm_prompt(monkeypatch, conversion):
+    captured = {}
+
+    class FakeResult:
+        text_content = "ok"
+
+    class FakeMarkItDown:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+        def convert(self, _file_path):
+            return FakeResult()
+
+    class FakeOpenAI:
+        def __init__(self, **_kwargs):
+            pass
+
+    openai_module = types.ModuleType("openai")
+    openai_module.OpenAI = FakeOpenAI
+    monkeypatch.setitem(
+        sys.modules,
+        "markitdown",
+        types.SimpleNamespace(MarkItDown=FakeMarkItDown),
+    )
+    monkeypatch.setitem(sys.modules, "openai", openai_module)
+
+    conversion._convert_with_markitdown(
+        "photo.png",
+        conversion.ConversionOptions(
+            llm_base_url="http://localhost:1234/v1",
+            llm_model="m",
+        ),
+        llm_prompt="Transcribe this",
+    )
+
+    assert captured.get("llm_prompt") == "Transcribe this"
+
+
+def test_convert_image_tesseract_mode_skips_azure(monkeypatch, conversion):
+    calls = []
+
+    def fake_convert(*_args, **_kwargs):
+        calls.append("markitdown")
+        return ""
+
+    monkeypatch.setattr(conversion, "_convert_with_markitdown", fake_convert)
+    monkeypatch.setattr(
+        conversion,
+        "_convert_image_with_local_ocr",
+        lambda *_args, **_kwargs: "tess only",
+    )
+
+    result = conversion.convert_file(
+        "scan.png",
+        conversion.ConversionOptions(
+            ocr_enabled=True,
+            ocr_method=conversion.OCR_METHOD_TESSERACT,
+            docintel_endpoint="https://example.cognitiveservices.azure.com/",
+        ),
+    )
+
+    assert result == "tess only"
+    assert calls == []
+
+
+def test_convert_image_openai_vision_mode(monkeypatch, conversion):
+    def fake_vision(path, options):
+        assert path == "page.png"
+        assert options.normalized_ocr_method == conversion.OCR_METHOD_OPENAI_VISION
+        return "vision text"
+
+    monkeypatch.setattr(
+        conversion,
+        "_convert_image_with_openai_vision_ocr",
+        fake_vision,
+    )
+
+    outcome = conversion.convert_file_with_details(
+        "page.png",
+        conversion.ConversionOptions(
+            ocr_enabled=True,
+            ocr_method=conversion.OCR_METHOD_OPENAI_VISION,
+            llm_base_url="http://localhost:1234/v1",
+            llm_model="m",
+        ),
+    )
+
+    assert outcome.markdown == "vision text"
+    assert outcome.backend == conversion.BACKEND_OPENAI_VISION
+
+
+def test_convert_pdf_openai_vision_skips_native_markitdown(monkeypatch, conversion):
+    calls = []
+
+    def fake_convert(*_args, **_kwargs):
+        calls.append("native")
+        return ""
+
+    monkeypatch.setattr(conversion, "_convert_with_markitdown", fake_convert)
+    monkeypatch.setattr(
+        conversion,
+        "_convert_pdf_with_openai_vision_ocr",
+        lambda *_args, **_kwargs: "pdf vision text",
+    )
+
+    result = conversion.convert_file(
+        "scan.pdf",
+        conversion.ConversionOptions(
+            ocr_enabled=True,
+            ocr_method=conversion.OCR_METHOD_OPENAI_VISION,
+            llm_base_url="http://x/v1",
+            llm_model="m",
+        ),
+    )
+
+    assert result == "pdf vision text"
+    assert calls == []
+
+
+def test_convert_image_auto_uses_openai_when_llm_saved(monkeypatch, conversion):
+    def fake_convert(_path, _options, use_docintel=False, llm_prompt=None):
+        if use_docintel:
+            return ""
+        return ""
+
+    def fake_vision(path, _options):
+        assert path == "x.png"
+        return "from lm studio"
+
+    monkeypatch.setattr(conversion, "_convert_with_markitdown", fake_convert)
+    monkeypatch.setattr(
+        conversion,
+        "_convert_image_with_openai_vision_ocr",
+        fake_vision,
+    )
+    monkeypatch.setattr(
+        conversion,
+        "_convert_image_with_local_ocr",
+        lambda *_a, **_k: (_ for _ in ()).throw(
+            AssertionError("tesseract should not run after vision succeeds")
+        ),
+    )
+
+    outcome = conversion.convert_file_with_details(
+        "x.png",
+        conversion.ConversionOptions(
+            ocr_enabled=True,
+            ocr_method=conversion.OCR_METHOD_AUTO,
+            docintel_endpoint="https://example.cognitiveservices.azure.com/",
+            llm_base_url="http://localhost:1234/v1",
+            llm_model="m",
+            llm_saved_for_auto_ocr=True,
+        ),
+    )
+
+    assert outcome.markdown == "from lm studio"
+    assert outcome.backend == conversion.BACKEND_OPENAI_VISION
+
+
+def test_convert_image_auto_skips_openai_without_saved_llm_flag(monkeypatch, conversion):
+    called: list[str] = []
+
+    def fake_vision(*_a, **_k):
+        called.append("vision")
+        return "x"
+
+    monkeypatch.setattr(
+        conversion,
+        "_convert_image_with_openai_vision_ocr",
+        fake_vision,
+    )
+    monkeypatch.setattr(
+        conversion,
+        "_convert_with_markitdown",
+        lambda *_a, **_k: "",
+    )
+    monkeypatch.setattr(
+        conversion,
+        "_convert_image_with_local_ocr",
+        lambda *_a, **_k: "tess",
+    )
+
+    outcome = conversion.convert_file_with_details(
+        "x.png",
+        conversion.ConversionOptions(
+            ocr_enabled=True,
+            ocr_method=conversion.OCR_METHOD_AUTO,
+            docintel_endpoint="https://example.cognitiveservices.azure.com/",
+            llm_base_url="http://localhost:1234/v1",
+            llm_model="m",
+            llm_saved_for_auto_ocr=False,
+        ),
+    )
+
+    assert outcome.markdown == "tess"
+    assert called == []
+
+
 def test_test_azure_ocr_connection_uses_admin_client_with_api_key(monkeypatch, conversion):
     captured = {}
 
@@ -514,6 +821,44 @@ def test_conversion_worker_tracks_failed_files_separately_from_result_text(
     worker.run()
 
     assert worker.failed_files == {"failure.pdf"}
+
+
+def test_conversion_worker_emits_progress_start_and_end(monkeypatch, conversion):
+    events: list[tuple] = []
+
+    class RecordingProgress:
+        def connect(self, _callback):
+            pass
+
+        def emit(self, *args):
+            events.append(tuple(args))
+
+    def fake_convert(file_path, _options):
+        return conversion.ConversionOutcome(
+            markdown="ok", backend=conversion.BACKEND_NATIVE
+        )
+
+    monkeypatch.setattr(conversion, "convert_file_with_details", fake_convert)
+
+    worker = conversion.ConversionWorker(["a.txt", "b.txt"], batch_size=2)
+    worker.progress = RecordingProgress()
+    worker.pdf_page_progress = RecordingProgress()
+    worker.run()
+
+    assert events == [
+        (0, 2, "a.txt", True),
+        (1, 2, "a.txt", False),
+        (1, 2, "b.txt", True),
+        (2, 2, "b.txt", False),
+    ]
+
+
+def test_conversion_worker_empty_queue_finishes_without_progress(monkeypatch, conversion):
+    events: list[tuple] = []
+    worker = conversion.ConversionWorker([], batch_size=3)
+    worker.progress.connect(lambda *args: events.append(args))
+    worker.run()
+    assert events == []
 
 
 def test_conversion_worker_tracks_processing_backends(monkeypatch, conversion):

@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import json
 import os
+import time
+from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QKeySequence, QResizeEvent, QShortcut, QTextDocument
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
+    QFrame,
     QHBoxLayout,
     QListWidget,
     QMessageBox,
@@ -30,6 +34,7 @@ from qfluentwidgets import (
     ProgressBar,
     PushButton,
     SegmentedWidget,
+    SubtitleLabel,
 )
 
 from markitdowngui.core.conversion import (
@@ -37,6 +42,7 @@ from markitdowngui.core.conversion import (
     BACKEND_DEFUDDLE,
     BACKEND_LOCAL,
     BACKEND_NATIVE,
+    BACKEND_OPENAI_VISION,
     ConversionOptions,
     ConversionWorker,
 )
@@ -68,15 +74,30 @@ class HomeInterface(QWidget):
         self.conversionResults: dict[str, str] = {}
         self.failedConversionFiles: set[str] = set()
         self.processingBackends: dict[str, str] = {}
-        self._is_dark_theme = False
+        self._conversion_started_monotonic: float | None = None
+        self._progress_last_n: int = 0
+        self._progress_last_total: int = 0
+        self._progress_last_path: str = ""
+        self._progress_last_is_start: bool = True
+        self._progress_pdf_cur: int = 0
+        self._progress_pdf_total: int = 0
+        self._progress_pdf_model_pending: bool = False
+        self._theme_effective = "light"
         self._current_markdown = ""
         self._preview_file_caption_full_text = ""
         self.setAcceptDrops(True)
 
         self._build_ui()
+        self._progress_tick_timer = QTimer(self)
+        self._progress_tick_timer.setInterval(500)
+        self._progress_tick_timer.timeout.connect(self._refresh_progress_meta_line)
         self.setup_shortcuts()
         self.setup_update_checker()
         self._set_state_empty()
+        if self.settings_manager.get_conversion_in_progress():
+            self._reconcile_orphan_conversion_ui(force_aborted_session=True)
+        else:
+            self._reconcile_orphan_conversion_ui()
 
     def translate(self, key: str) -> str:
         try:
@@ -96,40 +117,59 @@ class HomeInterface(QWidget):
         self.main_layout.setSpacing(10)
 
         self.empty_card = ElevatedCardWidget(self)
+        self.empty_card.setObjectName("HomeEmptyCard")
+        self.empty_card.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Maximum,
+        )
         empty_layout = QVBoxLayout(self.empty_card)
-        empty_layout.setContentsMargins(30, 28, 30, 28)
-        empty_layout.setSpacing(10)
-        empty_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.empty_title_label = BodyLabel(self.translate("home_empty_state_title"))
-        self.empty_subtitle_label = CaptionLabel(self.translate("home_empty_subtitle"))
+        empty_layout.setContentsMargins(40, 36, 40, 36)
+        empty_layout.setSpacing(20)
+        # Avoid QVBoxLayout.setAlignment(AlignCenter): it centers each row and forces
+        # row width to each widget's minimum (e.g. 560px URL bar), shrinking the card.
+
+        self.empty_section_label = CaptionLabel(
+            self.translate("home_empty_section_label")
+        )
+        self.empty_section_label.setObjectName("HomeEmptySection")
+        empty_layout.addWidget(self.empty_section_label)
+
+        self.empty_title_label = SubtitleLabel(
+            self.translate("home_empty_state_title")
+        )
+        self.empty_title_label.setWordWrap(True)
+        empty_layout.addWidget(self.empty_title_label)
+
+        self.empty_subtitle_label = BodyLabel(self.translate("home_empty_subtitle"))
+        self.empty_subtitle_label.setWordWrap(True)
+        empty_layout.addWidget(self.empty_subtitle_label)
+
+        self.empty_select_btn = PrimaryPushButton(
+            self.translate("home_add_files_button")
+        )
+        self.empty_select_btn.setIcon(FIF.FOLDER_ADD)
+        self.empty_select_btn.setMinimumHeight(52)
+        self.empty_select_btn.setMinimumWidth(480)
+        self.empty_select_btn.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed,
+        )
+        self.empty_select_btn.clicked.connect(self.browse_files)
+        empty_layout.addWidget(self.empty_select_btn)
+
+        self.empty_url_input = UrlInputBar(self.translate, self.empty_card)
+        self.empty_url_input.setMinimumHeight(50)
+        self.empty_url_input.url_edit.setMinimumHeight(44)
+        self.empty_url_input.submit_button.setMinimumHeight(44)
+        self.empty_url_input.url_submitted.connect(self.submit_url)
+        empty_layout.addWidget(self.empty_url_input)
+
         self.supported_formats_label = CaptionLabel(
             self.translate("home_supported_formats")
         )
-        self.empty_subtitle_label.setWordWrap(True)
         self.supported_formats_label.setWordWrap(True)
-        empty_layout.addWidget(
-            self.empty_title_label,
-            0,
-            Qt.AlignmentFlag.AlignHCenter,
-        )
-        empty_layout.addWidget(
-            self.empty_subtitle_label,
-            0,
-            Qt.AlignmentFlag.AlignHCenter,
-        )
-        self.empty_select_btn = PrimaryPushButton(self.translate("home_add_files_button"))
-        self.empty_select_btn.setIcon(FIF.FOLDER_ADD)
-        self.empty_select_btn.clicked.connect(self.browse_files)
-        empty_layout.addWidget(self.empty_select_btn, 0, Qt.AlignmentFlag.AlignHCenter)
-        self.empty_url_input = UrlInputBar(self.translate, self.empty_card)
-        self.empty_url_input.setMaximumWidth(560)
-        self.empty_url_input.url_submitted.connect(self.submit_url)
-        empty_layout.addWidget(self.empty_url_input, 0, Qt.AlignmentFlag.AlignHCenter)
-        empty_layout.addWidget(
-            self.supported_formats_label,
-            0,
-            Qt.AlignmentFlag.AlignHCenter,
-        )
+        empty_layout.addWidget(self.supported_formats_label)
+        empty_layout.addStretch(1)
 
         self.queue_card = ElevatedCardWidget(self)
         queue_layout = QVBoxLayout(self.queue_card)
@@ -158,6 +198,9 @@ class HomeInterface(QWidget):
         model.rowsRemoved.connect(lambda *_args: self._on_queue_rows_removed())
         model.modelReset.connect(lambda: self._on_queue_rows_removed())
         queue_layout.addWidget(self.filePanel, 1)
+        hdr_clear = self.filePanel.drop.clearAllHeaderButton
+        hdr_clear.clicked.disconnect()
+        hdr_clear.clicked.connect(self.clear_file_list)
 
         queue_actions = QHBoxLayout()
         queue_actions.setSpacing(8)
@@ -172,10 +215,21 @@ class HomeInterface(QWidget):
         queue_actions.addStretch(1)
         queue_layout.addLayout(queue_actions)
 
+        self.progress_primary = SubtitleLabel("")
+        self.progress_primary.setWordWrap(True)
+        queue_layout.addWidget(self.progress_primary)
+
         self.progress = ProgressBar()
-        self.progress_status = CaptionLabel("")
+        self.progress.setMinimumHeight(10)
         queue_layout.addWidget(self.progress)
-        queue_layout.addWidget(self.progress_status)
+
+        self.progress_meta = CaptionLabel("")
+        self.progress_meta.setWordWrap(True)
+        queue_layout.addWidget(self.progress_meta)
+
+        self.progress_kind = CaptionLabel("")
+        self.progress_kind.setWordWrap(True)
+        queue_layout.addWidget(self.progress_kind)
 
         controls = QHBoxLayout()
         controls.setSpacing(8)
@@ -220,6 +274,12 @@ class HomeInterface(QWidget):
         self.result_file_list = QListWidget(splitter)
         self.result_file_list.currentItemChanged.connect(self._on_result_file_changed)
         self.result_file_list.setMinimumWidth(240)
+        self.result_file_list.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOn
+        )
+        self.result_file_list.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
 
         right_panel = QWidget(splitter)
         right_layout = QVBoxLayout(right_panel)
@@ -257,12 +317,26 @@ class HomeInterface(QWidget):
 
         self.markdown_stack = QStackedWidget(right_panel)
         self.markdown_rendered = QTextBrowser(self.markdown_stack)
+        self.markdown_rendered.setFrameShape(QFrame.Shape.NoFrame)
         self.markdown_rendered.setOpenExternalLinks(True)
+        self.markdown_rendered.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOn
+        )
+        self.markdown_rendered.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
         self.markdown_rendered.setPlaceholderText(
             self.translate("home_markdown_placeholder")
         )
         self.markdown_raw = QTextEdit(self.markdown_stack)
+        self.markdown_raw.setFrameShape(QFrame.Shape.NoFrame)
         self.markdown_raw.setReadOnly(True)
+        self.markdown_raw.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOn
+        )
+        self.markdown_raw.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
         self.markdown_raw.setPlaceholderText(self.translate("home_markdown_placeholder"))
         self.markdown_stack.addWidget(self.markdown_rendered)
         self.markdown_stack.addWidget(self.markdown_raw)
@@ -311,8 +385,8 @@ class HomeInterface(QWidget):
         self.main_layout.addWidget(self.queue_card)
         self.main_layout.addWidget(self.results_card, 1)
 
-    def apply_theme_styles(self, is_dark: bool) -> None:
-        self._is_dark_theme = bool(is_dark)
+    def apply_theme_styles(self, theme_effective: str) -> None:
+        self._theme_effective = theme_effective
         if self._current_markdown:
             self._set_markdown_preview(self._current_markdown)
 
@@ -377,8 +451,9 @@ class HomeInterface(QWidget):
 
     def shutdown(self) -> None:
         if self.worker and self.worker.isRunning():
-            self.worker.is_cancelled = True
+            self.worker.request_cancel()
             self.worker.wait(2000)
+        self.settings_manager.set_conversion_in_progress(False)
         if hasattr(self, "update_checker") and self.update_checker.isRunning():
             self.update_checker.wait(2000)
 
@@ -469,6 +544,7 @@ class HomeInterface(QWidget):
         self._clear_result_views(reset_progress=had_results)
         self._set_state_empty()
         self._update_queue_title()
+        self._reconcile_orphan_conversion_ui()
         AppLogger.info(self.translate("file_list_cleared_log"))
 
     def toggle_pause(self, paused: bool) -> None:
@@ -477,13 +553,42 @@ class HomeInterface(QWidget):
             self.pause_button.setText(
                 self.translate("resume_button") if paused else self.translate("pause_button")
             )
+        self._refresh_progress_meta_line()
 
     def cancel_conversion(self) -> None:
         if self.worker and self.worker.isRunning():
-            self.worker.is_cancelled = True
+            self.worker.request_cancel()
             self.worker.is_paused = False
             self.pause_button.setChecked(False)
             AppLogger.info(self.translate("conversion_cancelled_log"))
+            return
+        self._reconcile_orphan_conversion_ui()
+
+    def _reconcile_orphan_conversion_ui(self, *, force_aborted_session: bool = False) -> None:
+        """Reset UI when Convert is disabled but no conversion thread is alive (crash/kill/stale)."""
+        if self.worker is not None and self.worker.isRunning():
+            return
+        if not force_aborted_session and self.convert_button.isEnabled():
+            return
+        if self.worker is not None:
+            try:
+                self.worker.progress.disconnect()
+                self.worker.pdf_page_progress.disconnect()
+                self.worker.finished.disconnect()
+                self.worker.error.disconnect()
+            except (TypeError, RuntimeError):
+                pass
+            self.worker.deleteLater()
+            self.worker = None
+        self._progress_tick_timer.stop()
+        self._conversion_started_monotonic = None
+        self._reset_progress_display()
+        self.pause_button.setEnabled(False)
+        self.pause_button.setChecked(False)
+        self.pause_button.setText(self.translate("pause_button"))
+        self.cancel_button.setEnabled(False)
+        self.convert_button.setEnabled(True)
+        self.settings_manager.set_conversion_in_progress(False)
 
     def convert_files(self) -> None:
         if self.worker and self.worker.isRunning():
@@ -519,20 +624,35 @@ class HomeInterface(QWidget):
         try:
             batch_size = self.settings_manager.get_batch_size()
             options = self._build_conversion_options()
+            self._conversion_started_monotonic = time.monotonic()
+
             self.worker = ConversionWorker(valid_sources, batch_size, options)
             self.worker.progress.connect(self.update_progress)
+            self.worker.pdf_page_progress.connect(self.update_pdf_page_progress)
             self.worker.finished.connect(self.handle_conversion_finished)
             self.worker.error.connect(self.handle_conversion_error)
 
             self.pause_button.setEnabled(True)
             self.cancel_button.setEnabled(True)
             self.convert_button.setEnabled(False)
+            self.progress_primary.setText(self.translate("conversion_starting_message"))
+            self.progress_meta.setText("")
+            self.progress_kind.setText("")
             self.progress.setValue(0)
-            self.progress_status.setText(self.translate("conversion_starting_message"))
-            self.progress.setFormat(self.translate("conversion_starting_message"))
+            self.progress.setFormat(
+                self.translate("conversion_progress_bar_format").format(percent=0)
+            )
+            self.progress.setAccessibleName(
+                self.translate("conversion_accessible_progress").format(
+                    count=len(valid_sources)
+                )
+            )
             self.worker.start()
+            self.settings_manager.set_conversion_in_progress(True)
+            self._progress_tick_timer.start()
             self._set_state_queue()
         except Exception as e:
+            self.settings_manager.set_conversion_in_progress(False)
             AppLogger.error(f"Error starting conversion: {str(e)}")
             QMessageBox.critical(
                 self,
@@ -544,18 +664,156 @@ class HomeInterface(QWidget):
     def _build_conversion_options(self) -> ConversionOptions:
         return ConversionOptions(
             ocr_enabled=self.settings_manager.get_ocr_enabled(),
+            ocr_force_pdf=self.settings_manager.get_ocr_force_pdf(),
+            ocr_method=self.settings_manager.get_ocr_method(),
             docintel_endpoint=self.settings_manager.get_docintel_endpoint(),
             ocr_languages=self.settings_manager.get_ocr_languages(),
             tesseract_path=self.settings_manager.get_tesseract_path(),
+            llm_base_url=self.settings_manager.get_llm_base_url(),
+            llm_model=self.settings_manager.get_llm_model(),
+            llm_saved_for_auto_ocr=self.settings_manager.is_llm_saved_for_automatic_ocr_chain(),
+            llm_vision_system_prompt=self.settings_manager.get_llm_vision_system_prompt(),
         )
 
-    def update_progress(self, progress: int, current_file: str) -> None:
-        text = self.translate("conversion_progress_format").format(
-            progress=progress, file=source_display_name(current_file)
+    @staticmethod
+    def _format_duration(seconds: float) -> str:
+        sec = int(max(0, round(seconds)))
+        h, rem = divmod(sec, 3600)
+        m, s = divmod(rem, 60)
+        if h:
+            return f"{h}:{m:02d}:{s:02d}"
+        return f"{m}:{s:02d}"
+
+    def _progress_source_kind_text(self, path: str) -> str:
+        if is_web_url(path):
+            return self.translate("conversion_source_kind_website")
+        suffix = Path(path.strip()).suffix
+        if suffix:
+            ext = suffix.lstrip(".").upper() or suffix.upper()
+            return self.translate("conversion_source_kind_extension").format(ext=ext)
+        return self.translate("conversion_source_kind_file")
+
+    def _sync_queue_selection_to_path(self, path: str) -> None:
+        lw = self.filePanel.drop.listWidget
+        for row in range(lw.count()):
+            item = lw.item(row)
+            if item is not None and item.text() == path:
+                lw.setCurrentRow(row)
+                lw.scrollToItem(item)
+                break
+
+    def _build_progress_meta_line(self) -> str:
+        start = self._conversion_started_monotonic
+        total = self._progress_last_total
+        if start is None or total <= 0:
+            return ""
+        n = self._progress_last_n
+        is_start = self._progress_last_is_start
+        elapsed_sec = time.monotonic() - start
+        elapsed_str = self._format_duration(elapsed_sec)
+        if self.worker and self.worker.is_paused:
+            return self.translate("conversion_progress_paused_elapsed").format(
+                elapsed=elapsed_str
+            )
+        if is_start:
+            done = n
+            remaining = total - n
+        else:
+            done = n
+            remaining = total - n
+        if done <= 0 or remaining <= 0:
+            return self.translate("conversion_progress_meta_elapsed").format(
+                elapsed=elapsed_str
+            )
+        rate = elapsed_sec / done
+        eta_sec = rate * remaining
+        eta_str = self._format_duration(eta_sec)
+        return self.translate("conversion_progress_meta_elapsed_eta").format(
+            elapsed=elapsed_str, eta=eta_str
         )
-        self.progress.setValue(progress)
-        self.progress.setFormat(text)
-        self.progress_status.setText(text)
+
+    def _refresh_progress_meta_line(self) -> None:
+        if self._conversion_started_monotonic is None:
+            return
+        self.progress_meta.setText(self._build_progress_meta_line())
+
+    def _compose_progress_primary_text(self) -> None:
+        n = self._progress_last_n
+        total_files = self._progress_last_total
+        path = self._progress_last_path
+        is_start = self._progress_last_is_start
+        display_name = source_display_name(path)
+        if is_start:
+            primary = self.translate("conversion_progress_primary_start").format(
+                current=n + 1, total=total_files, file=display_name
+            )
+        else:
+            primary = self.translate("conversion_progress_after_item").format(
+                completed=n, total=total_files, file=display_name
+            )
+        pc, pt = self._progress_pdf_cur, self._progress_pdf_total
+        if pt > 0 and is_start:
+            page_part = self.translate("conversion_progress_page_suffix").format(
+                current=pc, total=pt
+            )
+            if self._progress_pdf_model_pending:
+                page_part = (
+                    f"{page_part} {self.translate('conversion_progress_page_model_pending')}"
+                )
+            primary = f"{primary} {page_part}"
+        self.progress_primary.setText(primary)
+
+    def _apply_progress_bar_from_state(self) -> None:
+        total = self._progress_last_total
+        n = self._progress_last_n
+        is_start = self._progress_last_is_start
+        page_cur = self._progress_pdf_cur
+        page_total = self._progress_pdf_total
+        if total <= 0:
+            bar_pct = 0
+        elif page_total > 0 and is_start:
+            frac = min(1.0, page_cur / page_total)
+            bar_pct = int((n + frac) / total * 100)
+        else:
+            bar_pct = int(n * 100 / total)
+        bar_pct = min(100, bar_pct)
+        self.progress.setValue(bar_pct)
+        self.progress.setFormat(
+            self.translate("conversion_progress_bar_format").format(percent=bar_pct)
+        )
+
+    def update_progress(self, n: int, total: int, path: str, is_item_start: bool) -> None:
+        self._progress_last_n = n
+        self._progress_last_total = total
+        self._progress_last_path = path
+        self._progress_last_is_start = is_item_start
+        self._progress_pdf_cur = 0
+        self._progress_pdf_total = 0
+        self._progress_pdf_model_pending = False
+        self._compose_progress_primary_text()
+        self.progress_kind.setText(self._progress_source_kind_text(path))
+        self._apply_progress_bar_from_state()
+        self.progress_meta.setText(self._build_progress_meta_line())
+        self._sync_queue_selection_to_path(path)
+
+    def update_pdf_page_progress(self, payload: str) -> None:
+        try:
+            data = json.loads(payload)
+            path = str(data["path"])
+            page_cur = int(data["c"])
+            page_total = int(data["t"])
+            self._progress_pdf_model_pending = bool(data.get("p", False))
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+            return
+        self._progress_pdf_cur = page_cur
+        self._progress_pdf_total = page_total
+        self._progress_last_path = path
+        self._progress_last_is_start = True
+        self._compose_progress_primary_text()
+        self.progress_kind.setText(self._progress_source_kind_text(path))
+        self._apply_progress_bar_from_state()
+        self.progress_meta.setText(self._build_progress_meta_line())
+        self._sync_queue_selection_to_path(path)
 
     def handle_conversion_finished(self, results: dict[str, str]) -> None:
         self.conversionResults = results
@@ -563,7 +821,6 @@ class HomeInterface(QWidget):
         self.processingBackends = (
             dict(self.worker.processing_backends) if self.worker else {}
         )
-        self.progress.setValue(100)
         failed_count = len(self.failedConversionFiles)
         done_text = self.translate("conversion_complete_message")
         if failed_count:
@@ -575,8 +832,25 @@ class HomeInterface(QWidget):
         status_text = done_text
         if backend_summary:
             status_text = f"{done_text} {backend_summary}"
-        self.progress.setFormat(status_text)
-        self.progress_status.setText(status_text)
+
+        self.progress_primary.setText(done_text)
+        meta_parts: list[str] = []
+        if self._conversion_started_monotonic is not None:
+            meta_parts.append(
+                self.translate("conversion_progress_meta_elapsed").format(
+                    elapsed=self._format_duration(
+                        time.monotonic() - self._conversion_started_monotonic
+                    )
+                )
+            )
+        if backend_summary:
+            meta_parts.append(backend_summary.strip())
+        self.progress_meta.setText(" · ".join(meta_parts) if meta_parts else "")
+        self.progress_kind.setText("")
+        self.progress.setValue(100)
+        self.progress.setFormat(
+            self.translate("conversion_progress_bar_format").format(percent=100)
+        )
         self._reset_controls()
         self._populate_result_view()
         self._set_state_results()
@@ -603,6 +877,7 @@ class HomeInterface(QWidget):
             BACKEND_DEFUDDLE: 0,
             BACKEND_LOCAL: 0,
             BACKEND_NATIVE: 0,
+            BACKEND_OPENAI_VISION: 0,
         }
 
         for file_path, backend in self.processingBackends.items():
@@ -617,6 +892,7 @@ class HomeInterface(QWidget):
             (BACKEND_DEFUDDLE, "conversion_backend_defuddle"),
             (BACKEND_LOCAL, "conversion_backend_local"),
             (BACKEND_NATIVE, "conversion_backend_native"),
+            (BACKEND_OPENAI_VISION, "conversion_backend_openai_vision"),
         ):
             count = counts[backend]
             if count:
@@ -640,6 +916,8 @@ class HomeInterface(QWidget):
         self._reset_controls()
 
     def _reset_controls(self) -> None:
+        self._progress_tick_timer.stop()
+        self.settings_manager.set_conversion_in_progress(False)
         self.pause_button.setEnabled(False)
         self.pause_button.setChecked(False)
         self.pause_button.setText(self.translate("pause_button"))
@@ -680,10 +958,13 @@ class HomeInterface(QWidget):
             self.markdown_rendered.clear()
             return
 
+        self.markdown_rendered.document().setDefaultStyleSheet(
+            "a { text-decoration: none; }"
+        )
         doc = QTextDocument()
         doc.setMarkdown(markdown_text)
         rendered_html = doc.toHtml()
-        css = markdown_html_css(self._is_dark_theme)
+        css = markdown_html_css(self._theme_effective)
         self.markdown_rendered.setHtml(f"<style>{css}</style>{rendered_html}")
 
     def _show_rendered_markdown(self) -> None:
@@ -781,9 +1062,19 @@ class HomeInterface(QWidget):
         return output_dir if output_dir and os.path.isdir(output_dir) else ""
 
     def _reset_progress_display(self) -> None:
+        self._conversion_started_monotonic = None
+        self._progress_last_n = 0
+        self._progress_last_total = 0
+        self._progress_last_path = ""
+        self._progress_last_is_start = True
+        self._progress_pdf_cur = 0
+        self._progress_pdf_total = 0
+        self.progress_primary.setText("")
+        self.progress_meta.setText("")
+        self.progress_kind.setText("")
         self.progress.setValue(0)
         self.progress.setFormat("")
-        self.progress_status.setText("")
+        self.progress.setAccessibleName("")
 
     def _clear_result_views(self, *, reset_progress: bool = False) -> None:
         self.conversionResults = {}
@@ -858,6 +1149,7 @@ class HomeInterface(QWidget):
                 self._set_state_empty()
             elif next_state == "queue":
                 self._set_state_queue()
+            self._reconcile_orphan_conversion_ui()
         except RuntimeError:
             return
 

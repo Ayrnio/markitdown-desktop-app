@@ -21,17 +21,28 @@ def settings_manager(tmp_path):
 
 def test_dark_mode(settings_manager):
     """Test getting and setting the dark mode preference."""
-    assert not settings_manager.get_dark_mode()  # Default is False
+    assert settings_manager.get_dark_mode()  # Default theme is Perfect Dark
+    settings_manager.set_theme_mode("light")
+    assert not settings_manager.get_dark_mode()
     settings_manager.set_dark_mode(True)
     assert settings_manager.get_dark_mode()
 
 def test_theme_mode(settings_manager):
     """Test setting and retrieving explicit theme mode."""
-    assert settings_manager.get_theme_mode() in {"light", "dark", "system"}
+    assert settings_manager.get_theme_mode() == "perfect_dark"
+    assert settings_manager.get_theme_mode() in {
+        "light",
+        "dark",
+        "system",
+        "perfect_dark",
+    }
     settings_manager.set_theme_mode("system")
     assert settings_manager.get_theme_mode() == "system"
     settings_manager.set_theme_mode("dark")
     assert settings_manager.get_theme_mode() == "dark"
+    settings_manager.set_theme_mode("perfect_dark")
+    assert settings_manager.get_theme_mode() == "perfect_dark"
+    assert settings_manager.get_dark_mode()
     settings_manager.set_theme_mode("invalid")
     assert settings_manager.get_theme_mode() == "light"
 
@@ -106,6 +117,18 @@ def test_ocr_settings(settings_manager):
     settings_manager.set_ocr_enabled(True)
     assert settings_manager.get_ocr_enabled()
 
+    assert not settings_manager.get_ocr_force_pdf()
+    settings_manager.set_ocr_force_pdf(True)
+    assert settings_manager.get_ocr_force_pdf()
+
+    assert settings_manager.get_ocr_method() == "auto"
+    settings_manager.set_ocr_method("tesseract")
+    assert settings_manager.get_ocr_method() == "tesseract"
+    settings_manager.set_ocr_method("openai_vision")
+    assert settings_manager.get_ocr_method() == "openai_vision"
+    settings_manager.set_ocr_method("invalid")
+    assert settings_manager.get_ocr_method() == "auto"
+
     assert settings_manager.get_docintel_endpoint() == ""
     settings_manager.set_docintel_endpoint(" https://example.cognitiveservices.azure.com/ ")
     assert settings_manager.get_docintel_endpoint() == "https://example.cognitiveservices.azure.com/"
@@ -117,3 +140,30 @@ def test_ocr_settings(settings_manager):
     assert settings_manager.get_tesseract_path() == ""
     settings_manager.set_tesseract_path(" /usr/bin/tesseract ")
     assert settings_manager.get_tesseract_path() == "/usr/bin/tesseract"
+
+
+def test_conversion_in_progress_flag(settings_manager):
+    assert not settings_manager.get_conversion_in_progress()
+    settings_manager.set_conversion_in_progress(True)
+    assert settings_manager.get_conversion_in_progress()
+    settings_manager.set_conversion_in_progress(False)
+    assert not settings_manager.get_conversion_in_progress()
+
+
+def test_llm_vision_system_prompt_round_trip(settings_manager):
+    assert settings_manager.get_llm_vision_system_prompt() == ""
+    settings_manager.set_llm_vision_system_prompt(" Custom ")
+    assert settings_manager.get_llm_vision_system_prompt() == " Custom "
+
+
+def test_llm_saved_for_automatic_ocr_chain(settings_manager):
+    assert not settings_manager.is_llm_saved_for_automatic_ocr_chain()
+
+    settings_manager.set_llm_base_url("http://localhost:1234/v1")
+    assert not settings_manager.is_llm_saved_for_automatic_ocr_chain()
+
+    settings_manager.set_llm_model("m")
+    assert settings_manager.is_llm_saved_for_automatic_ocr_chain()
+
+    settings_manager.set_llm_model("")
+    assert not settings_manager.is_llm_saved_for_automatic_ocr_chain()

@@ -5,33 +5,59 @@ from qfluentwidgets import Theme, isDarkTheme, setTheme, setThemeColor
 
 SOLARIZED_ACCENT = "#2AA198"
 NORD_ACCENT = "#88C0D0"
+PERFECT_DARK_ACCENT = "#454494"
 ACCENT_COLOR = SOLARIZED_ACCENT
 
 
-def apply_app_theme(theme_mode: str) -> bool:
-    """Apply app theme and return whether dark mode is active."""
+def apply_app_theme(theme_mode: str) -> str:
+    """Apply Fluent theme and return effective stylesheet key: light, dark, or perfect_dark."""
     normalized = (theme_mode or "").strip().lower()
+    if normalized == "perfect_dark":
+        setTheme(Theme.DARK)
+        setThemeColor(PERFECT_DARK_ACCENT)
+        return "perfect_dark"
     if normalized == "dark":
         setTheme(Theme.DARK)
-    elif normalized == "system":
+        setThemeColor(NORD_ACCENT)
+        return "dark"
+    if normalized == "system":
         setTheme(Theme.AUTO)
-    else:
-        setTheme(Theme.LIGHT)
+        dark_mode = bool(isDarkTheme())
+        setThemeColor(NORD_ACCENT if dark_mode else SOLARIZED_ACCENT)
+        return "dark" if dark_mode else "light"
 
-    dark_mode = bool(isDarkTheme())
-    setThemeColor(NORD_ACCENT if dark_mode else SOLARIZED_ACCENT)
-    return dark_mode
+    setTheme(Theme.LIGHT)
+    setThemeColor(SOLARIZED_ACCENT)
+    return "light"
 
 
-def build_app_stylesheet(is_dark: bool) -> str:
+def build_app_stylesheet(theme: str) -> str:
     """Return global app QSS for cleaner card and section visuals."""
-    if is_dark:
+    if theme == "perfect_dark":
+        panel_bg_a = "#2E3440"
+        panel_bg_b = "#212121"
+        window_bg = "#292929"
+        stack_bg = "#252525"
+        nav_bg = "#2E3440"
+        nav_border = "#454494"
+        nav_rail_outline = "#C4C4F4"
+        card_bg = "#212121"
+        card_bg_alt = "#292929"
+        border = "#454494"
+        text = "#ECEFF4"
+        subtext = "#D8DEE9"
+        input_bg = "#1C1C1C"
+        hover = "#454494"
+        title = "#ECEFF4"
+        accent = PERFECT_DARK_ACCENT
+    elif theme == "dark":
         panel_bg_a = "#2E3440"
         panel_bg_b = "#3B4252"
         window_bg = "#2B313D"
         stack_bg = "#313947"
         nav_bg = "#2E3440"
         nav_border = "#4C566A"
+        nav_rail_outline = "#8B9BB4"
         card_bg = "#3B4252"
         card_bg_alt = "#434C5E"
         border = "#4C566A"
@@ -48,6 +74,7 @@ def build_app_stylesheet(is_dark: bool) -> str:
         stack_bg = "#FAF4E2"
         nav_bg = "#F2EAD3"
         nav_border = "#D9CCA8"
+        nav_rail_outline = "#B8A8D8"
         card_bg = "#FFFDF7"
         card_bg_alt = "#FFF9EB"
         border = "#D9CCA8"
@@ -83,19 +110,20 @@ StackedWidget {{
 
 NavigationInterface {{
     background-color: {nav_bg};
+    border: none;
+    border-right: 2px solid {nav_rail_outline};
 }}
 
 NavigationPanel[menu=false] {{
     background-color: {nav_bg};
     border: none;
-    border-right: 1px solid {nav_border};
     border-top-right-radius: 0px;
     border-bottom-right-radius: 0px;
 }}
 
 NavigationPanel[menu=true] {{
     background-color: {nav_bg};
-    border: 1px solid {nav_border};
+    border: 1px solid {nav_rail_outline};
     border-top-right-radius: 8px;
     border-bottom-right-radius: 8px;
 }}
@@ -110,6 +138,13 @@ NavigationPanel QScrollArea, NavigationPanel #scrollWidget {{
     font-size: 14px;
 }}
 
+#HomeEmptySection {{
+    color: {subtext};
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 2px;
+}}
+
 QScrollArea#SettingsScrollArea, QScrollArea#HelpScrollArea {{
     border: none;
     background: transparent;
@@ -117,6 +152,12 @@ QScrollArea#SettingsScrollArea, QScrollArea#HelpScrollArea {{
 
 QScrollArea#SettingsScrollArea > QWidget, QScrollArea#HelpScrollArea > QWidget {{
     background: transparent;
+}}
+
+#SettingsContent PushButton {{
+    min-height: 42px;
+    padding-left: 20px;
+    padding-right: 20px;
 }}
 
 CardWidget, ElevatedCardWidget, SimpleCardWidget {{
@@ -212,12 +253,39 @@ QSplitter::handle {{
 QSplitter::handle:hover {{
     background: {subtext};
 }}
+
+/* Home markdown preview: stable chrome (avoids vertical jump on hover from style changes). */
+#HomeInterface QTextBrowser,
+#HomeInterface QTextEdit {{
+    border: 1px solid {border};
+}}
+#HomeInterface QTextBrowser:hover,
+#HomeInterface QTextEdit:hover {{
+    border: 1px solid {border};
+}}
+#HomeInterface QTextBrowser:focus,
+#HomeInterface QTextEdit:focus {{
+    border: 1px solid {accent};
+}}
+#HomeInterface QTextBrowser QScrollBar:vertical,
+#HomeInterface QTextEdit QScrollBar:vertical {{
+    width: 14px;
+    min-width: 14px;
+    max-width: 14px;
+}}
 """
 
 
-def markdown_html_css(is_dark: bool) -> str:
-    """Return CSS for rendered markdown HTML."""
-    if is_dark:
+def markdown_html_css(theme: str) -> str:
+    """Return CSS for rendered markdown HTML (theme: light, dark, perfect_dark)."""
+    if theme == "perfect_dark":
+        bg = "#1C1C1C"
+        text = "#ECEFF4"
+        link = PERFECT_DARK_ACCENT
+        code_bg = "#212121"
+        border = "#454494"
+        muted = "#D8DEE9"
+    elif theme == "dark":
         bg = "#2F3644"
         text = "#ECEFF4"
         link = "#88C0D0"
@@ -232,13 +300,28 @@ def markdown_html_css(is_dark: bool) -> str:
         border = "#D9CCA8"
         muted = "#61767C"
 
+    heading_color = (
+        "#FFFFFF !important" if theme in ("dark", "perfect_dark") else "inherit"
+    )
+    headings = (
+        "h1,h2,h3,h4,h5,h6 { margin-top: 18px; margin-bottom: 10px; font-weight: 800; "
+        f"color: {heading_color}; }}"
+    )
+
+    table_heads = (
+        "th { font-weight: 700; color: #FFFFFF !important; }"
+        "td { color: inherit; }"
+        if theme in ("dark", "perfect_dark")
+        else "th { font-weight: 700; }"
+    )
+
     return (
         "body {"
         f"background:{bg}; color:{text}; font-size:15px; line-height:1.65; "
         "font-family:'Segoe UI', 'Noto Sans', sans-serif; margin:8px;"
         "}"
-        f"a {{ color:{link}; }}"
-        "h1,h2,h3,h4 { margin-top: 18px; margin-bottom: 10px; font-weight: 800; color: inherit; }"
+        f"a {{ color:{link}; text-decoration: none; }}"
+        f"{headings}"
         "h1 { font-size: 1.65em; }"
         "h2 { font-size: 1.40em; }"
         "h3 { font-size: 1.20em; }"
@@ -249,7 +332,7 @@ def markdown_html_css(is_dark: bool) -> str:
         f"blockquote {{ border-left:4px solid {border}; margin:8px 0; padding:4px 10px; color:{muted}; }}"
         f"table, th, td {{ border: 1px solid {border}; border-collapse: collapse; }}"
         "th, td { padding: 6px 8px; }"
-        "th { font-weight: 700; }"
+        f"{table_heads}"
     )
 
 
@@ -269,7 +352,7 @@ def apply_light_theme() -> QPalette:
 
 def markdown_css(is_dark: bool) -> str:
     """Backward-compatible alias for markdown style retrieval."""
-    return markdown_html_css(is_dark)
+    return markdown_html_css("dark" if is_dark else "light")
 
 
 def qcolor(hex_color: str) -> QColor:

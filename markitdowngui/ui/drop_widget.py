@@ -113,7 +113,11 @@ class DropWidget(QWidget):
         if action == remove_selected:
             self._remove_selected_items()
         elif action == clear_all:
-            self.listWidget.clear()
+            home = self._home_interface_parent()
+            if home is not None and hasattr(home, "clear_file_list"):
+                home.clear_file_list()
+            else:
+                self.listWidget.clear()
     
     def _remove_selected_items(self):
         # Remove from bottom to top to keep indices valid
@@ -121,6 +125,16 @@ class DropWidget(QWidget):
             row = self.listWidget.row(item)
             self.listWidget.takeItem(row)
     
+    def _home_interface_parent(self):
+        """FilePanel -> HomeInterface when using the standard layout."""
+        panel = self.parent()
+        if panel is None:
+            return None
+        home = panel.parent()
+        if home is not None and home.objectName() == "HomeInterface":
+            return home
+        return None
+
     def _wrap_keypress(self, original_handler):
         def handler(event):
             # Delete or Backspace removes selected

@@ -8,24 +8,24 @@ class SettingsManager:
         self.settings = QSettings('MarkItDown', 'GUI')
         
     def get_theme_mode(self) -> str:
-        """Get theme mode preference: 'light', 'dark', or 'system'."""
+        """Get theme mode preference: 'light', 'dark', 'system', or 'perfect_dark'."""
         theme_mode = str(self.settings.value('themeMode', '', type=str)).strip().lower()
-        if theme_mode in {'light', 'dark', 'system'}:
+        if theme_mode in {'light', 'dark', 'system', 'perfect_dark'}:
             return theme_mode
         # Backward compatibility for older boolean darkMode settings
         legacy_dark_mode = bool(self.settings.value('darkMode', False, type=bool))
-        return 'dark' if legacy_dark_mode else 'light'
+        return 'dark' if legacy_dark_mode else 'perfect_dark'
 
     def set_theme_mode(self, mode: str) -> None:
         """Set theme mode preference."""
         normalized = (mode or '').strip().lower()
-        if normalized not in {'light', 'dark', 'system'}:
+        if normalized not in {'light', 'dark', 'system', 'perfect_dark'}:
             normalized = 'light'
         self.settings.setValue('themeMode', normalized)
 
     def get_dark_mode(self) -> bool:
         """Backward compatible dark mode getter."""
-        return self.get_theme_mode() == 'dark'
+        return self.get_theme_mode() in {'dark', 'perfect_dark'}
 
     def set_dark_mode(self, enabled: bool) -> None:
         """Backward compatible dark mode setter."""
@@ -112,6 +112,24 @@ class SettingsManager:
         """Set whether OCR fallback is enabled."""
         self.settings.setValue('ocrEnabled', enabled)
 
+    def get_ocr_force_pdf(self) -> bool:
+        """Skip embedded PDF text and always use configured OCR backends."""
+        return bool(self.settings.value("ocrForcePdf", False, type=bool))
+
+    def set_ocr_force_pdf(self, enabled: bool) -> None:
+        self.settings.setValue("ocrForcePdf", bool(enabled))
+
+    def get_ocr_method(self) -> str:
+        """How to extract text from scans: auto, tesseract, or openai_vision."""
+        valid = {"auto", "tesseract", "openai_vision"}
+        v = str(self.settings.value("ocrMethod", "auto", type=str)).strip()
+        return v if v in valid else "auto"
+
+    def set_ocr_method(self, method: str) -> None:
+        valid = {"auto", "tesseract", "openai_vision"}
+        v = (method or "auto").strip()
+        self.settings.setValue("ocrMethod", v if v in valid else "auto")
+
     def get_docintel_endpoint(self) -> str:
         """Get the configured Azure Document Intelligence endpoint."""
         return str(self.settings.value('docintelEndpoint', '', type=str)).strip()
@@ -135,7 +153,53 @@ class SettingsManager:
     def set_tesseract_path(self, path: str) -> None:
         """Set the optional Tesseract executable path."""
         self.settings.setValue('tesseractPath', (path or '').strip())
-        
+
+    def get_llm_base_url(self) -> str:
+        """OpenAI-compatible API base URL (e.g. LM Studio)."""
+        if not self.settings.contains('llmBaseUrl'):
+            return "http://localhost:1234/v1"
+        return str(self.settings.value('llmBaseUrl', '', type=str)).strip()
+
+    def set_llm_base_url(self, url: str) -> None:
+        self.settings.setValue('llmBaseUrl', (url or '').strip())
+
+    def get_llm_model(self) -> str:
+        """Vision model id as exposed by the local server."""
+        if not self.settings.contains('llmModel'):
+            return "llava-v1.5-7b"
+        return str(self.settings.value('llmModel', '', type=str)).strip()
+
+    def set_llm_model(self, model: str) -> None:
+        self.settings.setValue('llmModel', (model or '').strip())
+
+    def get_llm_vision_system_prompt(self) -> str:
+        """Custom system prompt for OpenAI-compatible vision OCR; empty uses app default."""
+        return str(self.settings.value("llmVisionSystemPrompt", "", type=str))
+
+    def set_llm_vision_system_prompt(self, text: str) -> None:
+        self.settings.setValue("llmVisionSystemPrompt", text or "")
+
+    def set_conversion_in_progress(self, in_progress: bool) -> None:
+        """Persisted so we can recover UI if the process dies during conversion."""
+        self.settings.setValue("conversionInProgress", bool(in_progress))
+
+    def get_conversion_in_progress(self) -> bool:
+        return bool(self.settings.value("conversionInProgress", False, type=bool))
+
+    def is_llm_saved_for_automatic_ocr_chain(self) -> bool:
+        """True when both LM fields were explicitly saved with non-empty values.
+
+        Avoids treating first-run placeholder defaults (shown in the UI but not
+        persisted) as a configured server for Automatic OCR ordering.
+        """
+        if not self.settings.contains("llmBaseUrl") or not self.settings.contains(
+            "llmModel"
+        ):
+            return False
+        url = str(self.settings.value("llmBaseUrl", "", type=str)).strip()
+        model = str(self.settings.value("llmModel", "", type=str)).strip()
+        return bool(url and model)
+
     def get_update_notifications_enabled(self) -> bool:
         """Get whether update notifications are enabled."""
         return bool(self.settings.value('updateNotifications', True, type=bool))

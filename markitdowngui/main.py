@@ -18,8 +18,11 @@ def main():
     
     # Create and start application
     app = QApplication(sys.argv)
+    app.setApplicationName("AYRN MarkFlow")
     window = MainWindow()
     window.show()
+    app.processEvents()
+    window.ensure_navigation_expanded()
     sys.exit(app.exec())
 
 if __name__ == '__main__':

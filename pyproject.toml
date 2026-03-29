@@ -11,6 +11,7 @@ license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "openai>=1.0.0",
     "markitdown[az-doc-intel,docx,pdf,pptx,xls,xlsx]==0.1.5",
     "pypdfium2",
     "pytesseract",

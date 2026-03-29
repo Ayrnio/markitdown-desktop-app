@@ -57,7 +57,7 @@ class AboutDialog(QDialog):
         license_text = self._read_license_text()
 
         lic_html = (
-            "<h3>MarkItDown GUI</h3>"
+            f"<h3>{self.translate('app_title')}</h3>"
             f"<p><b>Version:</b> {APP_VERSION}</p>"
             f"<p><b>Python:</b> {python_ver}<br>"
             f"<b>PySide6:</b> {pyside_ver}"
