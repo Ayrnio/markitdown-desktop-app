@@ -22,7 +22,7 @@ Most conversion tools give you a CLI and wish you luck. Markdown Alchemy gives y
 
 - **Live progress dashboard** — elapsed time, document count, and per-document page counter update in real time.
 - **Perfect Dark theme** — a refined dark palette with custom nav/title chrome, a centered content column on ultrawide displays, and assorted layout polish.
-- **OpenAI-compatible vision OCR** — point the app at any OpenAI-style vision endpoint (e.g. **LM Studio**) for rasterized PDF pages and images. Configure the base URL, model, and prompt right in Settings. An optional **"always OCR PDFs"** toggle skips embedded text for stubborn scans. Azure and Tesseract flows from upstream are still available.
+- **OpenAI-compatible vision OCR** — use any server that speaks the **OpenAI HTTP API** for chat with **image inputs** (local runtimes, gateways, or hosted proxies). Configure base URL, vision-capable model id, and optional system prompt in Settings. An optional **"always OCR PDFs"** toggle skips embedded text for stubborn scans. Azure and Tesseract flows from upstream are still available.
 - **Cancellation that actually cancels** — tearing down in-flight HTTP requests where applicable, with clearer PDF and model progress feedback.
 - **Add Folder** — imports top-level files from a directory (no recursive subfolder crawl), respecting the active file-type filter in the queue view.
 - **Extended i18n** — English and Chinese (zh_CN) strings cover every new UI element.
@@ -77,7 +77,7 @@ OCR is **optional** and **disabled by default**.
 
 - **Tesseract (local):** Install the binary from the [official Tesseract project](https://github.com/tesseract-ocr/tesseract). If it isn't on your `PATH`, set the executable path in Settings.
 - **Azure Document Intelligence:** Enter your endpoint in Settings. For API-key auth, set the `AZURE_OCR_API_KEY` environment variable; otherwise the app falls back to `DefaultAzureCredential`. Azure offers [500 free pages/month](https://azure.microsoft.com/en-us/products/ai-foundry/tools/document-intelligence#Pricing) at the time of writing.
-- **OpenAI-compatible vision (e.g. LM Studio):** Configure base URL, model, and prompt in Settings as documented in-app. You are responsible for any service you point the app at.
+- **OpenAI-compatible vision:** Point the app at any **OpenAI API–compatible** endpoint that supports **vision** in chat; configure base URL, model, and prompt in Settings as documented in-app. You are responsible for any service you use.
 
 ## Website URL Conversion
 
